@@ -15,10 +15,16 @@ namespace PeluqueriaCanina.Models
         public Empleado Veterinario { get; set; }
 
         // Detalles médicos
-        [Required(ErrorMessage = "El campo {0} es requerido")]
+        [Required(ErrorMessage = ErrMsgs.Requerido)]
+        [MinLength(5, ErrorMessage = ErrMsgs.StrMin)]
+        [MaxLength(1000, ErrorMessage = ErrMsgs.StrMax)]
+        [Display(Name = Alias.DiagnosticoMedico)]
         public string Diagnostico { get; set; }
-       
-        [Required(ErrorMessage = "El campo {0} es requerido")]
+
+        [Required(ErrorMessage = ErrMsgs.Requerido)]
+        [MinLength(5, ErrorMessage = ErrMsgs.StrMin)]
+        [MaxLength(1000, ErrorMessage = ErrMsgs.StrMax)]
+        [Display(Name = Alias.TratamientoRecetado)]
         public string TratamientoRecetado { get; set; }
         public decimal PesoMascota { get; set; }
     }
