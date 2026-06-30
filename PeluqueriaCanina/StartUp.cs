@@ -1,4 +1,7 @@
-﻿namespace PeluqueriaCanina
+﻿using Microsoft.EntityFrameworkCore;
+using PeluqueriaCanina.Data;
+
+namespace PeluqueriaCanina
 {
     public static class StartUp
     {
@@ -13,6 +16,9 @@
         private static void ConfigureServices(WebApplicationBuilder builder)
         {
             // Add services to the container.
+            builder.Services.AddDbContext<PeluqueriaContext>(options =>
+        options.UseInMemoryDatabase("PeluqueriaCaninaDb"));
+
             builder.Services.AddControllersWithViews();
         }
 
@@ -39,3 +45,4 @@
             .WithStaticAssets();
         }
     }
+}
