@@ -22,6 +22,7 @@ namespace PeluqueriaCanina.Models
         public string Apellido { get; set; }
 
         [Required(ErrorMessage = ErrMsgs.Requerido)]
+        [EmailAddress(ErrorMessage = ErrMsgs.NotValid)]
         [MinLength(5, ErrorMessage = ErrMsgs.StrMin)]
         [MaxLength(256, ErrorMessage = ErrMsgs.StrMax)]
         [Display(Name = Alias.CorreoElectronico)]
