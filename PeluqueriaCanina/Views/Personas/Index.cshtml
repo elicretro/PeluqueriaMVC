@@ -1,0 +1,57 @@
+@model IEnumerable<PeluqueriaCanina.Models.Persona>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Listado de Personas</h1>
+
+<p>
+    <a asp-action="Create" class="btn btn-primary">Create New</a>
+</p>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Nombre</th>
+            <th>Apellido</th>
+            <th>Correo Electrónico</th>
+            <th>DNI / Documento</th>
+            <th>Teléfono de Contacto</th>
+            <th>Rol / Tipo</th> <!-- 👈 Agregamos esta cabecera y sacamos NombreCompleto -->
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@Html.DisplayFor(modelItem => item.Nombre)</td>
+                <td>@Html.DisplayFor(modelItem => item.Apellido)</td>
+                <td>@Html.DisplayFor(modelItem => item.Email)</td>
+                <td>@Html.DisplayFor(modelItem => item.Dni)</td>
+                <td>@Html.DisplayFor(modelItem => item.Telefono)</td>
+                <td>
+                    <!-- 👈 El truco mágico: Evaluamos qué clase heredada es -->
+                    @if (item is PeluqueriaCanina.Models.Cliente)
+                    {
+                        <span class="badge bg-info text-dark">Cliente</span>
+                    }
+                    else if (item is PeluqueriaCanina.Models.Empleado)
+                    {
+                        <span class="badge bg-success text-white">Empleado</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-secondary text-white">Persona</span>
+                    }
+                </td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-warning">Edit</a> |
+                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-info">Details</a> |
+                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-danger">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
