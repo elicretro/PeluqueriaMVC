@@ -22,17 +22,14 @@ public class PersonasController : Controller
     // GET: PERSONAS/Details/5
     public async Task<IActionResult> Details(int? id)
     {
-        if (id == null)
-        {
-            return NotFound();
-        }
+        if (id == null) return NotFound();
 
+        // Cargamos la persona e incluimos sus mascotas de forma explícita si es Cliente
         var persona = await _context.Personas
+            .Include(p => (p as Cliente).Mascotas)
             .FirstOrDefaultAsync(m => m.Id == id);
-        if (persona == null)
-        {
-            return NotFound();
-        }
+
+        if (persona == null) return NotFound();
 
         return View(persona);
     }
