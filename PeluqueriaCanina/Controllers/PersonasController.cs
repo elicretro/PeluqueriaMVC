@@ -223,23 +223,64 @@ public class PersonasController : Controller
         return View(persona);
     }
 
+    // GET: Personas/Delete/5
+    public async Task<IActionResult> Delete(int? id)
+    {
+        if (id == null)
+        {
+            return NotFound();
+        }
+
+        // Buscamos a la persona en la base de datos
+        var persona = await _context.Personas
+            .FirstOrDefaultAsync(m => m.Id == id);
+
+        if (persona == null)
+        {
+            return NotFound();
+        }
+
+        // Si la encuentra, le manda los datos a la vista Delete.cshtml
+        return View(persona);
+    }
+
     // POST: PERSONAS/Delete/5
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int? id)
     {
         var persona = await _context.Personas.FindAsync(id);
+
         if (persona != null)
         {
+            // 1. Validamos si la persona que estamos intentando borrar es un Cliente
+            if (persona is Cliente cliente)
+            {
+                // Cargamos las mascotas de la base de datos de forma explícita
+                await _context.Entry(cliente).Collection(c => c.Mascotas).LoadAsync();
+
+                // Si el cliente tiene aunque sea una mascota, tiramos el freno de mano
+                if (cliente.Mascotas != null && cliente.Mascotas.Any())
+                {
+                    ModelState.AddModelError(string.Empty, "No se puede eliminar un cliente sin eliminar las mascotas primero.");
+
+                    // Devolvemos la vista "Delete" con los datos para que muestre el error en el resumen
+                    return View("Delete", persona);
+                }
+            }
+
+            // 2. Si no entró al IF de arriba (porque es Empleado o Cliente sin mascotas), borra normalmente
             _context.Personas.Remove(persona);
+            await _context.SaveChangesAsync();
         }
 
-        await _context.SaveChangesAsync();
         return RedirectToAction(nameof(Index));
     }
 
+    // REINJECTÁ ESTE MÉTODO (que se voló al reemplazar el anterior)
     private bool PersonaExists(int? id)
     {
         return _context.Personas.Any(e => e.Id == id);
     }
-}
+
+} // <--- ESTA ÚLTIMA LLAVE CIERRA LA CLASE COMPLETAMENTE

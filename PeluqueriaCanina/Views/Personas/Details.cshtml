@@ -79,6 +79,7 @@
                     <th>Tipo</th>
                     <th>Raza</th>
                     <th>Peso</th>
+                    <th>Acciones</th>
                 </tr>
             </thead>
             <tbody>
@@ -90,6 +91,15 @@
                         <td>@mascota.Tipo</td>
                         <td>@mascota.Raza</td>
                         <td>@mascota.Peso kg</td>
+                        <td class="d-flex gap-2">
+                            <a asp-controller="Mascotas" asp-action="Edit" asp-route-id="@mascota.Id" asp-route-idCliente="@Model.Id" class="btn btn-warning btn-sm">Editar</a>
+
+                            <form asp-controller="Mascotas" asp-action="DeleteMascotaPost" method="post" onsubmit="return confirm('¿Estás seguro de que querés eliminar a esta mascota?');" class="d-inline">
+                                <input type="hidden" name="id" value="@mascota.Id" />
+                                <input type="hidden" name="idCliente" value="@Model.Id" />
+                                <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                            </form>
+                        </td>
                     </tr>
                 }
             </tbody>

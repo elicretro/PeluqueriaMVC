@@ -38,9 +38,11 @@ public class MascotasController : Controller
     }
 
     // GET: MASCOTAS/Create
-    public IActionResult Create()
+    public IActionResult Create(int idCliente)
     {
-        return View(); // Esto le dice a ASP.NET: "buscá el archivo llamado 'Create.cshtml' en la carpeta '/Views/Mascotas/'"
+        // Guardamos el ID en el ViewBag para que la vista lo tenga a mano
+        ViewBag.IdCliente = idCliente;
+        return View();
     }
 
     // POST: MASCOTAS/Create
@@ -48,19 +50,32 @@ public class MascotasController : Controller
     // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("Id,Nombre,Edad,Tipo,Raza,Peso")] Mascota mascota, int idCliente)
+    public async Task<IActionResult> Create([Bind("Nombre,Edad,Tipo,Raza,Peso")] Mascota mascota, int idCliente)
     {
+        // Limpiamos errores de validación de campos que no enviamos
+        ModelState.Remove("Identificacion");
+        ModelState.Remove("Cliente");
+
         if (ModelState.IsValid)
         {
-            // Buscamos al cliente y agregamos la mascota
             var cliente = await _context.Personas.FindAsync(idCliente) as Cliente;
             if (cliente != null)
             {
+                if (cliente.Mascotas == null)
+                {
+                    cliente.Mascotas = new List<Mascota>();
+                }
+
+                // BORRAMOS la línea que daba error. Solo agregamos la mascota al cliente directamente.
                 cliente.Mascotas.Add(mascota);
                 await _context.SaveChangesAsync();
+
                 return RedirectToAction("Edit", "Personas", new { id = idCliente });
             }
         }
+
+    // Si falla algo, recargamos el ViewBag para no perder el ID
+    ViewBag.IdCliente = idCliente;
         return View(mascota);
     }
 
@@ -85,7 +100,7 @@ public class MascotasController : Controller
     // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int? id, [Bind("Id,Nombre,Edad,Tipo,Raza,Identificacion,Peso")] Mascota mascota)
+    public async Task<IActionResult> Edit(int id, [Bind("Id,Nombre,Edad,Tipo,Raza,Peso")] Mascota mascota, int idCliente)
     {
         if (id != mascota.Id)
         {
@@ -110,7 +125,7 @@ public class MascotasController : Controller
                     throw;
                 }
             }
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction("Details", "Personas", new { id = idCliente });
         }
         return View(mascota);
     }
@@ -134,18 +149,18 @@ public class MascotasController : Controller
     }
 
     // POST: MASCOTAS/Delete/5
-    [HttpPost, ActionName("Delete")]
+    [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> DeleteConfirmed(int? id)
+    public async Task<IActionResult> DeleteMascotaPost(int id, int idCliente)
     {
         var mascota = await _context.Mascotas.FindAsync(id);
         if (mascota != null)
         {
             _context.Mascotas.Remove(mascota);
+            await _context.SaveChangesAsync();
         }
-
-        await _context.SaveChangesAsync();
-        return RedirectToAction(nameof(Index));
+        // Te devuelve directo a los detalles del cliente que estábamos viendo
+        return RedirectToAction("Details", "Personas", new { id = idCliente });
     }
 
     private bool MascotaExists(int? id)
