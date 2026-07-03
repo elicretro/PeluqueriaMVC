@@ -27,7 +27,9 @@
 
             <div class="form-group">
                 <label asp-for="Tipo" class="control-label"></label>
-                <input asp-for="Tipo" class="form-control" />
+                <select asp-for="Tipo" class="form-control" asp-items="Html.GetEnumSelectList<PeluqueriaCanina.Models.TipoMascota>()">
+                    <option selected="selected" value="">-- Seleccione una especie --</option>
+                </select>
                 <span asp-validation-for="Tipo" class="text-danger"></span>
             </div>
 

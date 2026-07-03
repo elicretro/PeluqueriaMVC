@@ -34,7 +34,7 @@ public class PersonasController : Controller
         return View(persona);
     }
 
-    // GET: PERSONAS/Create
+    // GET: Personas/Create
     public IActionResult Create()
     {
         return View();
@@ -45,51 +45,53 @@ public class PersonasController : Controller
     // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(
-     [Bind("Id,Nombre,Apellido,Dni,Telefono,Email")] Persona persona,
-     string TipoPersona,
-     string puestoInput,
-     string especialidadInput)
+    public async Task<IActionResult> Create([Bind("Id,Nombre,Apellido,Dni,Telefono,Email")] Persona persona, string TipoPersona, string puestoInput, string especialidadInput)
     {
+        // Forzamos la remoción de validaciones extras que puedan estar molestando en el ModelState
+        ModelState.Remove("puestoInput");
+        ModelState.Remove("especialidadInput");
+
         if (ModelState.IsValid)
         {
-            Persona nuevaPersona;
-
             if (TipoPersona == "Empleado")
             {
-                TipoServicio especialidadConvertida;
-                if (!Enum.TryParse(especialidadInput, out especialidadConvertida))
-                {
-                    especialidadConvertida = TipoServicio.Peluqueria;
-                }
+                // Mapeo manual a tu clase Empleado
+                TipoServicio especialidadEnum;
+                Enum.TryParse(especialidadInput, out especialidadEnum);
 
-                nuevaPersona = new Empleado
+                var nuevoEmpleado = new Empleado
                 {
                     Nombre = persona.Nombre,
                     Apellido = persona.Apellido,
                     Dni = persona.Dni,
                     Telefono = persona.Telefono,
                     Email = persona.Email,
-                    Puesto = !string.IsNullOrEmpty(puestoInput) ? puestoInput : "Staff", // Guardamos el texto libre escrito
-                    Especialidad = especialidadConvertida // Guardamos el Enum
+                    Puesto = puestoInput,
+                    Especialidad = especialidadEnum
                 };
+                _context.Add(nuevoEmpleado);
             }
             else
             {
-                nuevaPersona = new Cliente
+                // Mapeo manual a tu clase Cliente (con su lista de mascotas vacía al inicio)
+                var nuevoCliente = new Cliente
                 {
                     Nombre = persona.Nombre,
                     Apellido = persona.Apellido,
                     Dni = persona.Dni,
                     Telefono = persona.Telefono,
-                    Email = persona.Email
+                    Email = persona.Email,
+                    Mascotas = new List<Mascota>()
                 };
+                _context.Add(nuevoCliente);
             }
 
-            _context.Add(nuevaPersona);
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
+
+        // Si llegó acá, es porque falló. 
+        // TIP: Poné un punto de interrupción (breakpoint) acá para revisar qué propiedad tiene el error en ModelState
         return View(persona);
     }
 

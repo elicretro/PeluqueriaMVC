@@ -40,7 +40,7 @@ public class MascotasController : Controller
     // GET: MASCOTAS/Create
     public IActionResult Create()
     {
-        return View();
+        return View(); // Esto le dice a ASP.NET: "buscá el archivo llamado 'Create.cshtml' en la carpeta '/Views/Mascotas/'"
     }
 
     // POST: MASCOTAS/Create
@@ -48,13 +48,18 @@ public class MascotasController : Controller
     // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("Id,Nombre,Edad,Tipo,Raza,Identificacion,Peso")] Mascota mascota)
+    public async Task<IActionResult> Create([Bind("Id,Nombre,Edad,Tipo,Raza,Peso")] Mascota mascota, int idCliente)
     {
         if (ModelState.IsValid)
         {
-            _context.Add(mascota);
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            // Buscamos al cliente y agregamos la mascota
+            var cliente = await _context.Personas.FindAsync(idCliente) as Cliente;
+            if (cliente != null)
+            {
+                cliente.Mascotas.Add(mascota);
+                await _context.SaveChangesAsync();
+                return RedirectToAction("Edit", "Personas", new { id = idCliente });
+            }
         }
         return View(mascota);
     }

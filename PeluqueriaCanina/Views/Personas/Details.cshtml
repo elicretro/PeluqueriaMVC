@@ -64,3 +64,39 @@
     <a asp-action="Edit" asp-route-id="@Model?.Id">Edit</a> |
     <a asp-action="Index">Back to List</a>
 </div>
+@if (Model is PeluqueriaCanina.Models.Cliente cliente)
+{
+    <hr />
+    <h3>Mascotas de este Cliente</h3>
+
+    @if (cliente.Mascotas != null && cliente.Mascotas.Any())
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Edad</th>
+                    <th>Tipo</th>
+                    <th>Raza</th>
+                    <th>Peso</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var mascota in cliente.Mascotas)
+                {
+                    <tr>
+                        <td>@mascota.Nombre</td>
+                        <td>@mascota.Edad</td>
+                        <td>@mascota.Tipo</td>
+                        <td>@mascota.Raza</td>
+                        <td>@mascota.Peso kg</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p class="text-muted">Este cliente todavía no tiene mascotas registradas.</p>
+    }
+}

@@ -96,3 +96,13 @@
         });
     </script>
 }
+@if (Model is PeluqueriaCanina.Models.Cliente cliente)
+{
+    <div class="card mt-4 p-3 border-info bg-light">
+        <h5>Gestión de Mascotas</h5>
+        <p class="text-muted mb-2">¿Este cliente trajo una nueva mascota? Registrala en su ficha:</p>
+        <a asp-controller="Mascotas" asp-action="Create" asp-route-idCliente="@cliente.Id" class="btn btn-info btn-sm">
+            ➕ Agregar Mascota a este Cliente
+        </a>
+    </div>
+}
