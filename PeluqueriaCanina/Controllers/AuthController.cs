@@ -255,10 +255,18 @@ namespace PeluqueriaCanina.Controllers
             return View();
         }
 
-        // POST: Auth/Logout
+        // GET: Auth/Logout
+        [HttpGet]
+        public async Task<IActionResult> Logout()
+        {
+            await _signInManager.SignOutAsync();
+            return View();
+        }
+
+        // POST: Auth/Logout (alternativa para formulario)
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Logout()
+        public async Task<IActionResult> LogoutPost()
         {
             await _signInManager.SignOutAsync();
             return RedirectToAction("Index", "Home");

@@ -41,15 +41,13 @@
                         {
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                    <i class="fas fa-user"></i> @User.Identity?.Name
+                                    👤 @User.Identity?.Name
                                 </a>
                                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                                    <li><a class="dropdown-item" href="#">Perfil</a></li>
+                                    <li><a class="dropdown-item" href="#">Mi Perfil</a></li>
                                     <li><hr class="dropdown-divider"></li>
                                     <li>
-                                        <form method="post" action="@Url.Action("Logout", "Auth")" style="display: inline;">
-                                            <button type="submit" class="dropdown-item">Cerrar Sesión</button>
-                                        </form>
+                                        <a class="dropdown-item text-danger" asp-area="" asp-controller="Auth" asp-action="Logout">Cerrar Sesión</a>
                                     </li>
                                 </ul>
                             </li>
