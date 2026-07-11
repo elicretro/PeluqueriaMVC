@@ -1,0 +1,45 @@
+@{
+    ViewData["Title"] = "Registro Exitoso";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-lg border-success">
+                <div class="card-header bg-success text-white">
+                    <h3 class="mb-0">✓ Registro Exitoso</h3>
+                </div>
+                <div class="card-body text-center">
+                    <p class="lead mb-4">
+                        ¡Tu registro ha sido completado exitosamente!
+                    </p>
+
+                    <div class="alert alert-info">
+                        <strong>Próximos pasos:</strong>
+                        <p>Tu cuenta está pendiente de aprobación por parte del administrador. Recibirás un correo confirmando tu activación.</p>
+                    </div>
+
+                    <p class="text-muted mb-4">
+                        Mientras tanto, puedes volver a la página de inicio o intentar iniciar sesión más tarde.
+                    </p>
+
+                    <div class="d-grid gap-2">
+                        <a href="@Url.Action("Index", "Home")" class="btn btn-primary btn-lg">Volver al Inicio</a>
+                        <a href="@Url.Action("Login", "Auth")" class="btn btn-outline-primary">Ir a Iniciar Sesión</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        border: none;
+        border-radius: 10px;
+    }
+
+    .card-header {
+        border-radius: 10px 10px 0 0 !important;
+    }
+</style>

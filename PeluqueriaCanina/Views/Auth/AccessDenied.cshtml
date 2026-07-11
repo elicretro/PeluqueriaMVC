@@ -1,0 +1,46 @@
+@{
+    ViewData["Title"] = "Acceso Denegado";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-lg border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h3 class="mb-0">⛔ Acceso Denegado</h3>
+                </div>
+                <div class="card-body text-center">
+                    <p class="lead mb-4">
+                        No tienes permisos para acceder a esta página.
+                    </p>
+
+                    <div class="alert alert-warning">
+                        <strong>Información:</strong>
+                        <p>Si crees que esto es un error, por favor contacta al administrador.</p>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <a href="@Url.Action("Index", "Home")" class="btn btn-primary btn-lg">Volver al Inicio</a>
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <form method="post" action="@Url.Action("Logout", "Auth")" style="margin: 0;">
+                                <button type="submit" class="btn btn-outline-danger w-100">Cerrar Sesión</button>
+                            </form>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        border: none;
+        border-radius: 10px;
+    }
+
+    .card-header {
+        border-radius: 10px 10px 0 0 !important;
+    }
+</style>

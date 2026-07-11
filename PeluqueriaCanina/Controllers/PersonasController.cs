@@ -1,9 +1,11 @@
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PeluqueriaCanina.Models;
 using PeluqueriaCanina.Data;
 
+[Authorize]
 public class PersonasController : Controller
 {
     private readonly PeluqueriaContext _context;

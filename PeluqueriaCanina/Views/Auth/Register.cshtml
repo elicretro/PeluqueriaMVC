@@ -1,0 +1,102 @@
+@{
+    ViewData["Title"] = "Registro";
+    var userType = ViewData["UserType"]?.ToString() ?? "";
+    var titulo = userType == "Cliente" ? "Registro de Cliente" : "Registro de Empleado";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-7">
+            <div class="card shadow-lg">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">@titulo</h3>
+                </div>
+                <div class="card-body">
+                    @if (ViewData.ModelState.IsValid == false)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <strong>Errores en el formulario:</strong>
+                            @foreach (var error in ViewData.ModelState.Values.SelectMany(x => x.Errors))
+                            {
+                                <div>• @error.ErrorMessage</div>
+                            }
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+
+                    <form method="post">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="nombre" class="form-label">Nombre</label>
+                                <input type="text" class="form-control" id="nombre" name="nombre" placeholder="Ingrese su nombre" required>
+                                <small class="text-muted">Solo letras y espacios</small>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="apellido" class="form-label">Apellido</label>
+                                <input type="text" class="form-control" id="apellido" name="apellido" placeholder="Ingrese su apellido" required>
+                                <small class="text-muted">Solo letras y espacios</small>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Correo Electrónico</label>
+                            <input type="email" class="form-control" id="email" name="email" placeholder="ejemplo@correo.com" required>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="dni" class="form-label">DNI</label>
+                                <input type="text" class="form-control" id="dni" name="dni" placeholder="12345678" maxlength="8" required>
+                                <small class="text-muted">7-8 números sin puntos</small>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="telefono" class="form-label">Teléfono</label>
+                                <input type="text" class="form-control" id="telefono" name="telefono" placeholder="1234567890" required>
+                                <small class="text-muted">Mínimo 8 números</small>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="password" class="form-label">Contraseña</label>
+                                <input type="password" class="form-control" id="password" name="password" placeholder="Mínimo 8 caracteres" required>
+                                <small class="text-muted">8+ caracteres, mayúscula, minúscula, número</small>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="confirmPassword" class="form-label">Confirmar Contraseña</label>
+                                <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" placeholder="Repita su contraseña" required>
+                            </div>
+                        </div>
+
+                        <input type="hidden" name="userType" value="@userType" />
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">Registrarse</button>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <p class="text-center">
+                            ¿Ya tienes cuenta? 
+                            <a href="@Url.Action("Login", "Auth")">Inicia sesión aquí</a>
+                        </p>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        border: none;
+        border-radius: 10px;
+    }
+
+    .card-header {
+        border-radius: 10px 10px 0 0 !important;
+    }
+</style>

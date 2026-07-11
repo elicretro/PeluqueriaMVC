@@ -1,0 +1,74 @@
+@{
+    ViewData["Title"] = "Iniciar Sesión";
+    var returnUrl = ViewData["ReturnUrl"];
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-lg">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">Iniciar Sesión</h3>
+                </div>
+                <div class="card-body">
+                    @if (Model != null && ViewData.ModelState.IsValid == false)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <strong>Error:</strong>
+                            @Html.ValidationMessage("", new { @class = "text-danger" })
+                            @if (ViewData.ModelState.Values.SelectMany(x => x.Errors).Count() > 0)
+                            {
+                                @foreach (var error in ViewData.ModelState.Values.SelectMany(x => x.Errors))
+                                {
+                                    <div>@error.ErrorMessage</div>
+                                }
+                            }
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+
+                    <form method="post">
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Correo Electrónico</label>
+                            <input type="email" class="form-control" id="email" name="email" placeholder="ejemplo@correo.com" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Contraseña</label>
+                            <input type="password" class="form-control" id="password" name="password" placeholder="Ingrese su contraseña" required>
+                        </div>
+
+                        <input type="hidden" name="returnUrl" value="@returnUrl" />
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">Iniciar Sesión</button>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <p class="text-center">
+                            ¿No tienes cuenta?
+                            <br>
+                            <a href="@Url.Action("Register", "Auth", new { userType = "Cliente" })" class="btn btn-success btn-sm">Registrarse como Cliente</a>
+                            <br><br>
+                            <small class="text-muted">¿Eres empleado?</small>
+                            <br>
+                            <a href="@Url.Action("Register", "Auth", new { userType = "Empleado" })" class="btn btn-warning btn-sm">Registrarse como Empleado</a>
+                        </p>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        border: none;
+        border-radius: 10px;
+    }
+
+    .card-header {
+        border-radius: 10px 10px 0 0 !important;
+    }
+</style>

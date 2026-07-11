@@ -1,5 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using PeluqueriaCanina.Data;
+using PeluqueriaCanina.Models;
 
 namespace PeluqueriaCanina
 {
@@ -19,7 +21,36 @@ namespace PeluqueriaCanina
                 options.UseSqlServer(
                     builder.Configuration.GetConnectionString("PeluqueriaContext")));
 
+            // Configurar Identity
+            builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+            {
+                // Políticas de contraseña
+                options.Password.RequiredLength = 8;
+                options.Password.RequireDigit = true;
+                options.Password.RequireLowercase = true;
+                options.Password.RequireUppercase = true;
+                options.Password.RequireNonAlphanumeric = false;
+
+                // Configuración de usuario
+                options.User.RequireUniqueEmail = true;
+                options.SignIn.RequireConfirmedEmail = false;
+                options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+                options.Lockout.MaxFailedAccessAttempts = 5;
+            })
+            .AddEntityFrameworkStores<PeluqueriaContext>()
+            .AddDefaultTokenProviders();
+
             builder.Services.AddControllersWithViews();
+
+            // Configurar opciones de autenticación
+            builder.Services.ConfigureApplicationCookie(options =>
+            {
+                options.LoginPath = "/Auth/Login";
+                options.LogoutPath = "/Auth/Logout";
+                options.AccessDeniedPath = "/Auth/AccessDenied";
+                options.ExpireTimeSpan = TimeSpan.FromDays(30);
+                options.SlidingExpiration = true;
+            });
         }
 
         private static void Configure(WebApplication app)
@@ -35,6 +66,8 @@ namespace PeluqueriaCanina
             app.UseHttpsRedirection();
             app.UseRouting();
 
+            // Agregar autenticación y autorización
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.MapStaticAssets();
