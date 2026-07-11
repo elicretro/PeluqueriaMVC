@@ -15,9 +15,9 @@ namespace PeluqueriaCanina
         }
         private static void ConfigureServices(WebApplicationBuilder builder)
         {
-            // Add services to the container.
             builder.Services.AddDbContext<PeluqueriaContext>(options =>
-        options.UseInMemoryDatabase("PeluqueriaCaninaDb"));
+                options.UseSqlServer(
+                    builder.Configuration.GetConnectionString("PeluqueriaContext")));
 
             builder.Services.AddControllersWithViews();
         }

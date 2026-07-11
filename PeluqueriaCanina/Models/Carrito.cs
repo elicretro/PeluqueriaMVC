@@ -1,7 +1,7 @@
 ﻿namespace PeluqueriaCanina.Models
 {
     using System.Collections.Generic;
-    using System.Linq; // Esto nos permite usar atajos geniales como .Sum()
+    using System.Linq;
 
     public class Carrito
     {
