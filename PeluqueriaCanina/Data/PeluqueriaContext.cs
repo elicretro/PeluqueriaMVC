@@ -6,6 +6,7 @@ namespace PeluqueriaCanina.Data
 {
     public class PeluqueriaContext : IdentityDbContext<ApplicationUser>
     {
+        public DbSet<PeluqueriaCanina.Models.Venta> Venta { get; set; } = default!;
         public PeluqueriaContext(DbContextOptions<PeluqueriaContext> options) : base(options) {
         }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -29,8 +30,10 @@ namespace PeluqueriaCanina.Data
         public DbSet<Mascota> Mascotas { get; set; }
         public DbSet<Producto> Productos { get; set; }
         public DbSet<Turno> Turnos { get; set; }
+        public DbSet<Venta> Ventas { get; set; }
+        public DbSet<ItemCarrito> ItemsCarrito { get; set; }
         public DbSet<HistoriaClinica> HistoriasClinicas { get; set; }
-
+       
 
     }
 }

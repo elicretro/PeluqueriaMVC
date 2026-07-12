@@ -25,5 +25,10 @@ namespace PeluqueriaCanina.Models
         public int Stock { get; set; }
         public CategoriasProductos Categoria { get; set; }
         public string PresentacionComercial => $"{Nombre} (${Precio}) - Stock: {Stock}";
+
+        public int CategoriaId { get; set; }
+
+  
+
     }
 }

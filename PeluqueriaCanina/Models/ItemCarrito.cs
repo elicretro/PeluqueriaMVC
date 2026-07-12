@@ -8,7 +8,7 @@ namespace PeluqueriaCanina.Models
 
         [ForeignKey("ProductoId")]
         public Producto Producto { get; set; }
-
+        public int ProductoId { get; set; }
         public int Cantidad { get; set; }
         public decimal Subtotal
         {

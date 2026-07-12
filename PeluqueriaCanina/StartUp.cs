@@ -39,7 +39,14 @@ namespace PeluqueriaCanina
             })
             .AddEntityFrameworkStores<PeluqueriaContext>()
             .AddDefaultTokenProviders();
+            builder.Services.AddDistributedMemoryCache();
 
+            builder.Services.AddSession(options =>
+            {
+                options.IdleTimeout = TimeSpan.FromMinutes(30);
+                options.Cookie.HttpOnly = true;
+                options.Cookie.IsEssential = true;
+            });
             builder.Services.AddControllersWithViews();
 
             // Configurar opciones de autenticación
@@ -65,7 +72,7 @@ namespace PeluqueriaCanina
 
             app.UseHttpsRedirection();
             app.UseRouting();
-
+            app.UseSession();
             // Agregar autenticación y autorización
             app.UseAuthentication();
             app.UseAuthorization();
