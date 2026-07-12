@@ -1,8 +1,11 @@
-
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PeluqueriaCanina.Models;
 using PeluqueriaCanina.Data;
+using PeluqueriaCanina.Helpers;
+using System.Linq;
+using System.Threading.Tasks;
+using System;
 
 public class VentasController : Controller
 {
@@ -14,7 +17,7 @@ public class VentasController : Controller
     }
 
     // GET: VENTAS
-    public async Task<IActionResult> Index()    
+    public async Task<IActionResult> Index()
     {
         return View(await _context.Venta.ToListAsync());
     }
@@ -37,26 +40,76 @@ public class VentasController : Controller
         return View(venta);
     }
 
-    // GET: VENTAS/Create
-    public IActionResult Create()
+    // GET: VENTAS/Checkout
+    [HttpGet]
+    public IActionResult Checkout()
     {
-        return View();
+        var carrito = HttpContext.Session.GetObjectFromJson<Carrito>("Carrito");
+
+        if (carrito == null || !carrito.Items.Any())
+        {
+            return RedirectToAction("Index", "Carrito");
+        }
+
+        return View(carrito);
     }
 
-    // POST: VENTAS/Create
-    // To protect from overposting attacks, enable the specific properties you want to bind to.
-    // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+    // POST: VENTAS/ConfirmarCompra
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("Id,Fecha,Cliente,Detalle,Total,MetodoPago")] Venta venta)
+    public async Task<IActionResult> ConfirmarCompra(MetodoDePago metodoPago)
     {
-        if (ModelState.IsValid)
+        var carrito = HttpContext.Session.GetObjectFromJson<Carrito>("Carrito");
+
+        if (carrito == null || !carrito.Items.Any())
         {
-            _context.Add(venta);
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction("Index", "Carrito");
         }
-        return View(venta);
+
+        var nuevaVenta = new Venta
+        {
+            Fecha = DateTime.Now,
+            MetodoPago = metodoPago,
+            Total = carrito.Total,
+            Cliente = carrito.Cliente // Asigna el cliente si ya está cargado en el carrito
+        };
+
+        foreach (var item in carrito.Items)
+        {
+            var dbProducto = await _context.Productos.FindAsync(item.Producto.Id);
+            if (dbProducto != null)
+            {
+                if (dbProducto.Stock < item.Cantidad)
+                {
+                    ModelState.AddModelError("", $"No hay suficiente stock disponible para: {dbProducto.Nombre}. Stock actual: {dbProducto.Stock}");
+                    return View("Checkout", carrito);
+                }
+
+                dbProducto.Stock -= item.Cantidad;
+                _context.Productos.Update(dbProducto);
+
+                nuevaVenta.Detalle.Add(new ItemCarrito
+                {
+                    Producto = dbProducto,
+                    Cantidad = item.Cantidad
+                });
+            }
+        }
+
+        _context.Venta.Add(nuevaVenta);
+        await _context.SaveChangesAsync();
+
+        HttpContext.Session.Remove("Carrito");
+
+        return RedirectToAction(nameof(Exito), new { id = nuevaVenta.Id });
+    }
+
+    // GET: VENTAS/Exito/5
+    [HttpGet]
+    public IActionResult Exito(int id)
+    {
+        ViewBag.VentaId = id;
+        return View();
     }
 
     // GET: VENTAS/Edit/5
@@ -76,11 +129,9 @@ public class VentasController : Controller
     }
 
     // POST: VENTAS/Edit/5
-    // To protect from overposting attacks, enable the specific properties you want to bind to.
-    // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int? id, [Bind("Id,Fecha,Cliente,Detalle,Total,MetodoPago")] Venta venta)
+    public async Task<IActionResult> Edit(int? id, [Bind("Id,Fecha,Total,MetodoPago")] Venta venta)
     {
         if (id != venta.Id)
         {

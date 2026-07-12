@@ -1,0 +1,54 @@
+﻿@model PeluqueriaCanina.Models.Carrito
+@using PeluqueriaCanina.Models
+
+@{
+    ViewData["Title"] = "Checkout";
+}
+
+<h1>Finalizar Compra</h1>
+
+<div class="row">
+    <div class="col-md-6">
+        <h3>Resumen del Pedido</h3>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Producto</th>
+                    <th>Cantidad</th>
+                    <th>Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.Items)
+                {
+                    <tr>
+                        <td>@item.Producto?.Nombre</td>
+                        <td>@item.Cantidad</td>
+                        <td>@item.Subtotal.ToString("C")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        <h4>Total a Pagar: <span class="text-success">@Model.Total.ToString("C")</span></h4>
+    </div>
+
+    <div class="col-md-6">
+        <h3>Método de Pago</h3>
+        <hr />
+        <div class="text-danger" asp-validation-summary="ModelOnly"></div>
+
+        <form asp-action="ConfirmarCompra" method="post">
+            <div class="form-group mb-3">
+                <label class="control-label fw-bold">Seleccione cómo desea abonar:</label>
+                <select name="metodoPago" class="form-control" asp-items="Html.GetEnumSelectList<MetodoDePago>()">
+                    <option value="">-- Seleccione un método --</option>
+                </select>
+            </div>
+
+            <div class="mt-4">
+                <button type="submit" class="btn btn-success btn-lg w-100">Confirmar y Pagar</button>
+                <a asp-controller="Carrito" asp-action="Index" class="btn btn-secondary w-100 mt-2">Volver al Carrito</a>
+            </div>
+        </form>
+    </div>
+</div>
