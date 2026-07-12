@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using PeluqueriaCanina.Data;
+using PeluqueriaCanina.Helpers;
+using PeluqueriaCanina.Models;
 
 namespace PeluqueriaCanina.Controllers
 {
@@ -12,10 +14,16 @@ namespace PeluqueriaCanina.Controllers
             _context = context;
         }
 
+
         public IActionResult Index()
         {
-            return View();
+            var carrito = HttpContext.Session
+                .GetObjectFromJson<Carrito>("Carrito")
+                ?? new Carrito();
+
+            return View(carrito);
         }
+
 
         public IActionResult Agregar(int id)
         {
