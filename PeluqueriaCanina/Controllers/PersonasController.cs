@@ -285,4 +285,4 @@ public class PersonasController : Controller
         return _context.Personas.Any(e => e.Id == id);
     }
 
-} // <--- ESTA ÚLTIMA LLAVE CIERRA LA CLASE COMPLETAMENTE
+} 
