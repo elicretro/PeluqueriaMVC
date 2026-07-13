@@ -45,18 +45,41 @@ namespace PeluqueriaCanina.Controllers
 
             try
             {
+                // Buscar usuario por email
                 var user = await _userManager.FindByEmailAsync(email);
-                if (user == null || !user.IsActive)
+
+                // Validar que el usuario existe
+                if (user == null)
                 {
-                    ModelState.AddModelError(string.Empty, "Email o contraseña incorrectos.");
+                    ModelState.AddModelError(string.Empty, "El email ingresado no está registrado en el sistema.");
                     return View();
                 }
 
-                var result = await _signInManager.PasswordSignInAsync(user.UserName, password, isPersistent: false, lockoutOnFailure: true);
+                // Validar si es empleado y está inactivo
+                if (user.TipoUsuario == "Empleado" && !user.IsActive)
+                {
+                    ModelState.AddModelError(string.Empty, 
+                        "Tu cuenta está pendiente de activación por parte del administrador. Por favor, intenta más tarde.");
+                    return View();
+                }
+
+                // Validar si es cliente y está inactivo (caso especial)
+                if (user.TipoUsuario == "Cliente" && !user.IsActive)
+                {
+                    ModelState.AddModelError(string.Empty, "Tu cuenta ha sido desactivada. Contacta con soporte.");
+                    return View();
+                }
+
+                // Intentar login
+                var result = await _signInManager.PasswordSignInAsync(
+                    user.UserName, 
+                    password, 
+                    isPersistent: false, 
+                    lockoutOnFailure: true);
 
                 if (result.Succeeded)
                 {
-                    // Redirigir según tipo de usuario
+                    // Login exitoso - redirigir según tipo de usuario
                     if (user.TipoUsuario == "Cliente")
                     {
                         return RedirectToAction("Index", "Home");
@@ -68,13 +91,23 @@ namespace PeluqueriaCanina.Controllers
                     return LocalRedirect(returnUrl ?? "/");
                 }
 
+                // Validar bloqueo temporal por intentos fallidos
                 if (result.IsLockedOut)
                 {
-                    ModelState.AddModelError(string.Empty, "Cuenta bloqueada temporalmente. Intente más tarde.");
+                    ModelState.AddModelError(string.Empty, 
+                        "Tu cuenta ha sido bloqueada temporalmente debido a múltiples intentos fallidos. Intenta más tarde.");
                     return View();
                 }
 
-                ModelState.AddModelError(string.Empty, "Email o contraseña incorrectos.");
+                // Validar si el email no está confirmado (si es requerido)
+                if (result.IsNotAllowed)
+                {
+                    ModelState.AddModelError(string.Empty, "Tu cuenta no está habilitada. Por favor, confirma tu email.");
+                    return View();
+                }
+
+                // Si llegamos aquí, contraseña incorrecta
+                ModelState.AddModelError(string.Empty, "La contraseña es incorrecta. Por favor, intenta nuevamente.");
             }
             catch (Exception ex)
             {
@@ -111,19 +144,21 @@ namespace PeluqueriaCanina.Controllers
         {
             ViewData["UserType"] = userType;
 
+            // Validar tipo de usuario
             if (string.IsNullOrEmpty(userType) || (userType != "Cliente" && userType != "Empleado"))
             {
                 ModelState.AddModelError(string.Empty, "Tipo de usuario inválido.");
                 return View();
             }
 
+            // Validar coincidencia de contraseñas
             if (password != confirmPassword)
             {
                 ModelState.AddModelError(string.Empty, "Las contraseñas no coinciden.");
                 return View();
             }
 
-            // Validar campos
+            // Validar campos requeridos
             if (string.IsNullOrWhiteSpace(nombre) || string.IsNullOrWhiteSpace(apellido) ||
                 string.IsNullOrWhiteSpace(dni) || string.IsNullOrWhiteSpace(telefono))
             {
@@ -197,13 +232,15 @@ namespace PeluqueriaCanina.Controllers
                 await _context.SaveChangesAsync();
 
                 // Crear ApplicationUser
+                // IMPORTANTE: Para empleados, IsActive = true aquí (serán desactivados después por admin si es necesario)
+                // Permitir login de empleados para que se autorregulen, luego admin puede desactivar si no cumple requisitos
                 var user = new ApplicationUser
                 {
                     UserName = email,
                     Email = email,
                     PersonaId = persona.Id,
                     TipoUsuario = userType,
-                    IsActive = userType == "Cliente" ? true : false // Empleados requieren activación
+                    IsActive = true // CAMBIO: Ambos tipos inician activos
                 };
 
                 var result = await _userManager.CreateAsync(user, password);
@@ -219,9 +256,10 @@ namespace PeluqueriaCanina.Controllers
                         await _signInManager.SignInAsync(user, isPersistent: false);
                         return RedirectToAction("Index", "Home");
                     }
-                    else
+                    else // Empleado
                     {
-                        // Para empleados, mostrar mensaje de espera
+                        // Para empleados: mostrar mensaje pero permitir que intenten login
+                        // El admin puede desactivarlos después desde el panel de administración
                         return RedirectToAction("RegistroExitoso");
                     }
                 }

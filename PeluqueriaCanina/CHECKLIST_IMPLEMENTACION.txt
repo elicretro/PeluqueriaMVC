@@ -1,0 +1,425 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                    CHECKLIST DE IMPLEMENTACIÓN                             ║
+║              Solución: Login de Empleados en ASP.NET Core                  ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+
+FASE 1: PREPARACIÓN
+════════════════════════════════════════════════════════════════════════════════
+
+[ ] 1. Leer archivo: 00_COMIENZA_AQUI.txt
+	  ├─ Entender el problema
+	  ├─ Revisar análisis
+	  └─ Conocer los cambios
+
+[ ] 2. Leer archivo: INSTRUCCIONES_CODIGO_COPIAR_PEGAR.txt
+	  ├─ Identificar los 3 cambios
+	  ├─ Localizar líneas exactas
+	  └─ Copiar código correcto
+
+[ ] 3. Tener abierto Visual Studio
+	  ├─ Solución: PeluqueriaMVC
+	  ├─ Proyecto: PeluqueriaCanina
+	  └─ Archivo: Controllers/AuthController.cs
+
+
+FASE 2: MODIFICAR CÓDIGO
+════════════════════════════════════════════════════════════════════════════════
+
+CAMBIO 1: Línea 206 en Register()
+─────────────────────────────────────────────────────────────────────────────
+
+[ ] Localizador: Buscar en AuthController.cs
+	Texto: "IsActive = userType == "Cliente" ? true : false"
+
+[ ] ANTES (línea 206):
+	IsActive = userType == "Cliente" ? true : false
+
+[ ] DESPUÉS:
+	IsActive = true
+
+[ ] Guardar cambio
+	└─ Ctrl+S
+
+
+CAMBIO 2: Método POST Login()
+─────────────────────────────────────────────────────────────────────────────
+
+[ ] Localizador: Buscar en AuthController.cs
+	Texto: "// POST: Auth/Login" (buscar alrededor de línea 36)
+
+[ ] Seleccionar TODO el método POST Login()
+	├─ Desde: [HttpPost]
+	└─ Hasta: } (before GET Register)
+
+[ ] Reemplazar con código nuevo de:
+	INSTRUCCIONES_CODIGO_COPIAR_PEGAR.txt
+	Sección: "CAMBIO 2: Reemplazar completamente el método POST Login()"
+
+[ ] Verificar que el código:
+	├─ Comienza con [HttpPost]
+	├─ Comienza con [ValidateAntiForgeryToken]
+	├─ Contiene mensajes específicos
+	├─ Termina con return View();
+	└─ Está correctamente indentado
+
+[ ] Guardar cambio
+	└─ Ctrl+S
+
+
+CAMBIO 3: Método POST Register()
+─────────────────────────────────────────────────────────────────────────────
+
+[ ] Localizador: Buscar en AuthController.cs
+	Texto: "// POST: Auth/Register" (buscar alrededor de línea 99)
+
+[ ] Seleccionar TODO el método POST Register()
+	├─ Desde: [HttpPost] (arriba de Register)
+	└─ Hasta: } (before GET RegistroExitoso)
+
+[ ] Reemplazar con código nuevo de:
+	INSTRUCCIONES_CODIGO_COPIAR_PEGAR.txt
+	Sección: "CAMBIO 3: Reemplazar completamente el método POST Register()"
+
+[ ] Verificar que el código:
+	├─ Contiene: IsActive = true
+	├─ Contiene mensajes de validación
+	├─ Maneja Cliente y Empleado
+	├─ Termina correctamente
+	└─ Está correctamente indentado
+
+[ ] Guardar cambio
+	└─ Ctrl+S
+
+
+FASE 3: VERIFICAR COMPILACIÓN
+════════════════════════════════════════════════════════════════════════════════
+
+[ ] Compilar proyecto
+	└─ dotnet build
+
+[ ] Verificar resultado
+	├─ ✅ Build successful → Continuar
+	└─ ❌ Errores de compilación → Revisar cambios
+
+
+FASE 4: EJECUTAR SCRIPT SQL
+════════════════════════════════════════════════════════════════════════════════
+
+⚠️  IMPORTANTE: Este paso activa empleados existentes que estaban bloqueados
+
+[ ] Abrir SQL Server Management Studio
+	├─ Click: Conectarse
+	├─ Seleccionar: (localdb)\mssqllocaldb
+	└─ Conectar
+
+[ ] Seleccionar base de datos
+	├─ Object Explorer → Bases de datos
+	├─ Right click → Propiedades (si es necesario)
+	└─ Seleccionar: PeluqueriaContext (o similar)
+
+[ ] Abrir archivo SQL
+	├─ File → Open → File
+	├─ Buscar: Migrations/MigrationEmpleados.sql
+	└─ Abrir
+
+[ ] Ejecutar script
+	├─ Seleccionar TODO el contenido (Ctrl+A)
+	├─ Ejecutar (F5 o botón Execute)
+	└─ Verificar: "Command(s) completed successfully"
+
+[ ] Verificar resultado
+	├─ Ejecutar query de verificación:
+	   SELECT COUNT(*) FROM [AspNetUsers] 
+	   WHERE [TipoUsuario] = 'Empleado' AND [IsActive] = 1;
+	└─ Debe mostrar cantidad > 0 si hay empleados
+
+
+FASE 5: EJECUTAR APLICACIÓN
+════════════════════════════════════════════════════════════════════════════════
+
+[ ] Iniciar aplicación
+	└─ dotnet run
+
+[ ] Esperar a que esté lista
+	├─ Ver mensaje: "Now listening on: http://localhost:7139"
+	└─ O similar según configuración
+
+[ ] Navegador
+	├─ Ir a: http://localhost:7139/Auth/Login
+	└─ Verificar que carga la página de login
+
+
+FASE 6: PRUEBAS DE FUNCIONALIDAD
+════════════════════════════════════════════════════════════════════════════════
+
+TEST 1: Empleado Registrado Antes (IsActive fue = false)
+─────────────────────────────────────────────────────────────────────────────
+
+[ ] Datos de prueba:
+	Email: (empleado registrado antes, ej: empleado1@test.com)
+	Password: (contraseña conocida)
+
+[ ] Procedimiento:
+	1. Ir a /Auth/Login
+	2. Ingresar email
+	3. Ingresar password
+	4. Click Login
+
+[ ] Verificación:
+	├─ ✅ Si login exitoso: Empleado activo correctamente
+	├─ ✅ Redirige a /Personas
+	└─ ✅ Test PASSED
+
+[ ] Si falla:
+	├─ Revisar script SQL
+	├─ Verificar IsActive = 1 en BD
+	└─ Intentar nuevamente
+
+
+TEST 2: Nuevo Empleado - Registro
+─────────────────────────────────────────────────────────────────────────────
+
+[ ] Ir a: /Auth/Register
+[ ] Seleccionar: Empleado
+[ ] Llenar formulario:
+	├─ Nombre: TestEmpleado
+	├─ Apellido: Test
+	├─ Email: testempleado@test.com
+	├─ DNI: 12345678
+	├─ Teléfono: 1234567890
+	├─ Password: TestPass123!
+	└─ Confirmar: TestPass123!
+
+[ ] Click: Registrarse
+
+[ ] Verificación:
+	├─ ✅ Redirige a RegistroExitoso
+	├─ ✅ Mensaje de confirmación visible
+	└─ ✅ Test PASSED
+
+
+TEST 3: Nuevo Empleado - Login
+─────────────────────────────────────────────────────────────────────────────
+
+[ ] Ir a: /Auth/Login
+[ ] Ingresar:
+	Email: testempleado@test.com
+	Password: TestPass123!
+
+[ ] Verificación:
+	├─ ✅ Login exitoso
+	├─ ✅ Redirige a /Personas
+	├─ ✅ Usuario logueado correctamente
+	└─ ✅ Test PASSED
+
+
+TEST 4: Mensajes de Error - Email No Existe
+─────────────────────────────────────────────────────────────────────────────
+
+[ ] Ir a: /Auth/Login
+[ ] Ingresar:
+	Email: nodexiste@test.com
+	Password: AnyPassword123
+
+[ ] Verificación:
+	├─ ✅ Error: "El email ingresado no está registrado en el sistema."
+	├─ ✅ Mensaje específico (NO genérico)
+	└─ ✅ Test PASSED
+
+
+TEST 5: Mensajes de Error - Password Incorrecto
+─────────────────────────────────────────────────────────────────────────────
+
+[ ] Ir a: /Auth/Login
+[ ] Ingresar:
+	Email: testempleado@test.com
+	Password: IncorrectPassword123
+
+[ ] Verificación:
+	├─ ✅ Error: "La contraseña es incorrecta. Por favor, intenta nuevamente."
+	├─ ✅ Mensaje específico (NO genérico)
+	└─ ✅ Test PASSED
+
+
+TEST 6: Panel Admin - Ver Empleados
+─────────────────────────────────────────────────────────────────────────────
+
+⚠️  Requiere usuario con rol Admin logueado
+
+[ ] Loguearse como admin
+	├─ Email: admin@peluqueria.com (o admin correspondiente)
+	└─ Password: (contraseña admin)
+
+[ ] Navegar a: /Admin/Empleados
+
+[ ] Verificación:
+	├─ ✅ Página carga sin errores
+	├─ ✅ Tabla de empleados visible
+	├─ ✅ Columnas: Email, Estado, Acciones
+	├─ ✅ Botones de Activar/Desactivar visibles
+	└─ ✅ Test PASSED
+
+
+TEST 7: Panel Admin - Desactivar Empleado
+─────────────────────────────────────────────────────────────────────────────
+
+[ ] En /Admin/Empleados
+[ ] Buscar empleado: testempleado@test.com
+[ ] Click: Botón "Desactivar" (icono de candado)
+[ ] Confirmación: ¿Estás seguro?
+[ ] Click: Aceptar
+
+[ ] Verificación:
+	├─ ✅ Página recarga
+	├─ ✅ Mensaje: "El empleado ha sido desactivado correctamente."
+	├─ ✅ Estado cambió a "Inactivo"
+	└─ ✅ Test PASSED
+
+
+TEST 8: Empleado Desactivado - Intenta Login
+─────────────────────────────────────────────────────────────────────────────
+
+[ ] Logout (si estás logueado como admin)
+[ ] Ir a: /Auth/Login
+[ ] Ingresar:
+	Email: testempleado@test.com
+	Password: TestPass123!
+
+[ ] Verificación:
+	├─ ✅ Error: "Tu cuenta está pendiente de activación por parte del administrador"
+	├─ ✅ Login rechazado
+	└─ ✅ Test PASSED
+
+
+TEST 9: Panel Admin - Reactivar Empleado
+─────────────────────────────────────────────────────────────────────────────
+
+[ ] Loguearse como admin
+[ ] Navegar a: /Admin/Empleados
+[ ] Buscar empleado: testempleado@test.com
+[ ] Click: Botón "Activar" (icono de desbloqueo)
+[ ] Confirmación: ¿Estás seguro?
+[ ] Click: Aceptar
+
+[ ] Verificación:
+	├─ ✅ Página recarga
+	├─ ✅ Mensaje: "El empleado ha sido activado correctamente."
+	├─ ✅ Estado cambió a "Activo"
+	└─ ✅ Test PASSED
+
+
+TEST 10: Empleado Reactivado - Login Funciona
+─────────────────────────────────────────────────────────────────────────────
+
+[ ] Logout
+[ ] Ir a: /Auth/Login
+[ ] Ingresar:
+	Email: testempleado@test.com
+	Password: TestPass123!
+
+[ ] Verificación:
+	├─ ✅ Login exitoso
+	├─ ✅ Redirige a /Personas
+	├─ ✅ Usuario activo nuevamente
+	└─ ✅ Test PASSED
+
+
+FASE 7: VALIDACIÓN FINAL
+════════════════════════════════════════════════════════════════════════════════
+
+RESUMEN DE TESTS:
+[ ] TEST 1 (Empleado antes): PASSED ___
+[ ] TEST 2 (Registro nuevo): PASSED ___
+[ ] TEST 3 (Login nuevo): PASSED ___
+[ ] TEST 4 (Error email): PASSED ___
+[ ] TEST 5 (Error password): PASSED ___
+[ ] TEST 6 (Admin ver): PASSED ___
+[ ] TEST 7 (Admin desact): PASSED ___
+[ ] TEST 8 (Desact login): PASSED ___
+[ ] TEST 9 (Admin reactiv): PASSED ___
+[ ] TEST 10 (Reactiv login): PASSED ___
+
+TOTAL: _____ / 10 PASSED
+
+
+CRITERIOS DE ÉXITO
+════════════════════════════════════════════════════════════════════════════════
+
+✅ ÉXITO SI:
+  ├─ 10/10 tests passed
+  ├─ Empleados pueden login
+  ├─ Mensajes específicos
+  ├─ Admin panel funciona
+  ├─ Activar/Desactivar funciona
+  ├─ Compilación exitosa
+  └─ Sin errores en aplicación
+
+❌ FALLO SI:
+  ├─ Menos de 10/10 tests passed
+  ├─ Empleados no pueden login
+  ├─ Mensajes genéricos
+  ├─ Admin panel no carga
+  ├─ Errores de compilación
+  └─ Errores en ejecución
+
+
+SOLUCIÓN DE PROBLEMAS
+════════════════════════════════════════════════════════════════════════════════
+
+PROBLEMA: "Build failed" después de cambios
+SOLUCIÓN:
+  1. Verificar indentación en AuthController.cs
+  2. Asegurar llaves balanceadas { }
+  3. Asegurar punto y coma al final de statements
+  4. Ejecutar: dotnet clean && dotnet build
+
+PROBLEMA: Empleado no puede login después de script SQL
+SOLUCIÓN:
+  1. Verificar que script SQL se ejecutó
+  2. Abrir SSMS y revisar: SELECT * FROM AspNetUsers WHERE Email = 'email'
+  3. Verificar que IsActive = 1
+  4. Si está 0, ejecutar script nuevamente
+
+PROBLEMA: "Access Denied" en /Admin/Empleados
+SOLUCIÓN:
+  1. Verificar que usuario tiene rol Admin
+  2. En SSMS:
+	 SELECT au.Email, ar.Name FROM AspNetUsers au
+	 INNER JOIN AspNetUserRoles aur ON au.Id = aur.UserId
+	 INNER JOIN AspNetRoles ar ON aur.RoleId = ar.Id
+  3. Si no tiene Admin, agregarlo
+
+PROBLEMA: Mensajes de error viejos (genéricos)
+SOLUCIÓN:
+  1. Verificar que cambios en Login() se guardaron
+  2. Compilar: dotnet clean && dotnet build
+  3. Ejecutar nuevamente: dotnet run
+
+PROBLEMA: AdminController no existe
+SOLUCIÓN:
+  1. Verificar archivo: Controllers/AdminController.cs existe
+  2. Verificar vistas en: Views/Admin/
+  3. Si no existen, están en la solución
+
+
+PRÓXIMAS ACCIONES (después de validar)
+════════════════════════════════════════════════════════════════════════════════
+
+✓ Si TODO está OK:
+  ├─ Commit cambios a git
+  ├─ Push a repositorio
+  ├─ Deploy a producción (si corresponde)
+  └─ Notificar a stakeholders
+
+✓ Si hay problemas:
+  ├─ Revisar sección "SOLUCIÓN DE PROBLEMAS"
+  ├─ Consultar: SOLUCION_LOGIN_EMPLEADOS.md
+  └─ Re-intentar pruebas
+
+
+════════════════════════════════════════════════════════════════════════════════
+Estado: ✅ CHECKLIST LISTO
+Última actualización: 2024
+Versión: 1.0
+════════════════════════════════════════════════════════════════════════════════

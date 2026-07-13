@@ -11,21 +11,24 @@
                 </div>
                 <div class="card-body text-center">
                     <p class="lead mb-4">
-                        ¡Tu registro ha sido completado exitosamente!
+                        ¡Tu registro como empleado ha sido completado exitosamente!
                     </p>
 
                     <div class="alert alert-info">
-                        <strong>Próximos pasos:</strong>
-                        <p>Tu cuenta está pendiente de aprobación por parte del administrador. Recibirás un correo confirmando tu activación.</p>
+                        <strong><i class="fas fa-info-circle"></i> Información Importante:</strong>
+                        <p>Tu cuenta está <strong>activa y lista para usar</strong>. El administrador podrá revisar tu perfil y hacer cambios si es necesario.</p>
+                        <p>Puedes intentar iniciar sesión ahora mismo con tu email y contraseña.</p>
                     </div>
 
                     <p class="text-muted mb-4">
-                        Mientras tanto, puedes volver a la página de inicio o intentar iniciar sesión más tarde.
+                        Si experimentas problemas al iniciar sesión, verifica tu email y contraseña, o contacta al administrador.
                     </p>
 
                     <div class="d-grid gap-2">
-                        <a href="@Url.Action("Index", "Home")" class="btn btn-primary btn-lg">Volver al Inicio</a>
-                        <a href="@Url.Action("Login", "Auth")" class="btn btn-outline-primary">Ir a Iniciar Sesión</a>
+                        <a href="@Url.Action("Login", "Auth")" class="btn btn-success btn-lg">
+                            <i class="fas fa-sign-in-alt"></i> Iniciar Sesión Ahora
+                        </a>
+                        <a href="@Url.Action("Index", "Home")" class="btn btn-outline-primary">Volver al Inicio</a>
                     </div>
                 </div>
             </div>

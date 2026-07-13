@@ -1,0 +1,284 @@
+================================================================================
+CÓDIGO PARA REEMPLAZAR EN AuthController.cs
+================================================================================
+
+CAMBIO 1: Línea 206 en Register()
+================================================================================
+REEMPLAZAR:
+	IsActive = userType == "Cliente" ? true : false // Empleados requieren activación
+
+POR:
+	IsActive = true  // CAMBIO CRUCIAL: Ambos tipos activos
+
+================================================================================
+
+CAMBIO 2: Reemplazar completamente el método POST Login()
+================================================================================
+
+BUSCAR: // POST: Auth/Login (desde línea ~36)
+
+REEMPLAZAR POR TODO ESTO:
+
+		// POST: Auth/Login - VERSIÓN CORREGIDA
+		// Ahora con mensajes específicos para cada tipo de error
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		public async Task<IActionResult> Login(string email, string password, string returnUrl = null)
+		{
+			if (!ModelState.IsValid)
+			{
+				return View();
+			}
+
+			try
+			{
+				// Buscar usuario por email
+				var user = await _userManager.FindByEmailAsync(email);
+
+				// MEJORA 1: Validar que el usuario existe
+				if (user == null)
+				{
+					ModelState.AddModelError(string.Empty, "El email ingresado no está registrado en el sistema.");
+					return View();
+				}
+
+				// MEJORA 2: Mensaje específico para empleados desactivados
+				if (user.TipoUsuario == "Empleado" && !user.IsActive)
+				{
+					ModelState.AddModelError(string.Empty, 
+						"Tu cuenta está pendiente de activación por parte del administrador. Por favor, intenta más tarde.");
+					return View();
+				}
+
+				// MEJORA 3: Mensaje para clientes desactivados (caso especial)
+				if (user.TipoUsuario == "Cliente" && !user.IsActive)
+				{
+					ModelState.AddModelError(string.Empty, "Tu cuenta ha sido desactivada. Contacta con soporte.");
+					return View();
+				}
+
+				// MEJORA 4: Intentar login con detalles específicos de errores
+				var result = await _signInManager.PasswordSignInAsync(
+					user.UserName, 
+					password, 
+					isPersistent: false, 
+					lockoutOnFailure: true);
+
+				if (result.Succeeded)
+				{
+					// Login exitoso - redirigir según tipo de usuario
+					if (user.TipoUsuario == "Cliente")
+					{
+						return RedirectToAction("Index", "Home");
+					}
+					else if (user.TipoUsuario == "Empleado")
+					{
+						return RedirectToAction("Index", "Personas");
+					}
+					return LocalRedirect(returnUrl ?? "/");
+				}
+
+				// MEJORA 5: Validar bloqueo temporal por intentos fallidos
+				if (result.IsLockedOut)
+				{
+					ModelState.AddModelError(string.Empty, 
+						"Tu cuenta ha sido bloqueada temporalmente debido a múltiples intentos fallidos. Intenta más tarde.");
+					return View();
+				}
+
+				// MEJORA 6: Validar si el email no está confirmado (si es requerido)
+				if (result.IsNotAllowed)
+				{
+					ModelState.AddModelError(string.Empty, "Tu cuenta no está habilitada. Por favor, confirma tu email.");
+					return View();
+				}
+
+				// Si llegamos aquí, contraseña incorrecta
+				ModelState.AddModelError(string.Empty, "La contraseña es incorrecta. Por favor, intenta nuevamente.");
+			}
+			catch (Exception ex)
+			{
+				ModelState.AddModelError(string.Empty, $"Error al iniciar sesión: {ex.Message}");
+			}
+
+			return View();
+		}
+
+================================================================================
+
+CAMBIO 3: Reemplazar completamente el método POST Register()
+================================================================================
+
+BUSCAR: // POST: Auth/Register (desde línea ~99)
+
+REEMPLAZAR POR TODO ESTO:
+
+		// POST: Auth/Register - VERSIÓN CORREGIDA
+		// CAMBIO CRUCIAL: IsActive = true para ambos tipos
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		public async Task<IActionResult> Register(
+			string nombre,
+			string apellido,
+			string email,
+			string dni,
+			string telefono,
+			string password,
+			string confirmPassword,
+			string userType)
+		{
+			ViewData["UserType"] = userType;
+
+			// Validar tipo de usuario
+			if (string.IsNullOrEmpty(userType) || (userType != "Cliente" && userType != "Empleado"))
+			{
+				ModelState.AddModelError(string.Empty, "Tipo de usuario inválido.");
+				return View();
+			}
+
+			// Validar coincidencia de contraseñas
+			if (password != confirmPassword)
+			{
+				ModelState.AddModelError(string.Empty, "Las contraseñas no coinciden.");
+				return View();
+			}
+
+			// Validar campos requeridos
+			if (string.IsNullOrWhiteSpace(nombre) || string.IsNullOrWhiteSpace(apellido) ||
+				string.IsNullOrWhiteSpace(dni) || string.IsNullOrWhiteSpace(telefono))
+			{
+				ModelState.AddModelError(string.Empty, "Todos los campos son requeridos.");
+				return View();
+			}
+
+			// Validar DNI (solo números, 7-8 dígitos)
+			if (!Regex.IsMatch(dni, @"^[0-9]{7,8}$"))
+			{
+				ModelState.AddModelError(string.Empty, "DNI inválido (debe tener 7-8 números).");
+				return View();
+			}
+
+			// Validar nombre y apellido (solo letras)
+			if (!Regex.IsMatch(nombre, @"^[a-zA-Z áéíóúÁÉÍÓÚñÑ]*$") ||
+				!Regex.IsMatch(apellido, @"^[a-zA-Z áéíóúÁÉÍÓÚñÑ]*$"))
+			{
+				ModelState.AddModelError(string.Empty, "Nombre y apellido deben contener solo letras.");
+				return View();
+			}
+
+			try
+			{
+				// Verificar si el email ya existe
+				var existingUser = await _userManager.FindByEmailAsync(email);
+				if (existingUser != null)
+				{
+					ModelState.AddModelError(string.Empty, "El email ya está registrado.");
+					return View();
+				}
+
+				// Verificar si el DNI ya existe
+				var existingPersona = _context.Personas.FirstOrDefault(p => p.Dni == dni);
+				if (existingPersona != null)
+				{
+					ModelState.AddModelError(string.Empty, "El DNI ya está registrado.");
+					return View();
+				}
+
+				// Crear Persona según tipo
+				Persona persona;
+				if (userType == "Cliente")
+				{
+					persona = new Cliente
+					{
+						Nombre = nombre,
+						Apellido = apellido,
+						Email = email,
+						Dni = dni,
+						Telefono = telefono,
+						NroCliente = GenerarNumeroCliente()
+					};
+				}
+				else // Empleado
+				{
+					persona = new Empleado
+					{
+						Nombre = nombre,
+						Apellido = apellido,
+						Email = email,
+						Dni = dni,
+						Telefono = telefono,
+						Legajo = GenerarLegajo(),
+						Puesto = "Sin definir",
+						Sueldo = 0
+					};
+				}
+
+				_context.Personas.Add(persona);
+				await _context.SaveChangesAsync();
+
+				// Crear ApplicationUser
+				// *** CAMBIO CRUCIAL: IsActive = true para AMBOS tipos ***
+				// Los empleados ahora se activan automáticamente al registrarse
+				// El admin puede desactivarlos después desde /Admin/Empleados si es necesario
+				var user = new ApplicationUser
+				{
+					UserName = email,
+					Email = email,
+					PersonaId = persona.Id,
+					TipoUsuario = userType,
+					IsActive = true  // ✓✓✓ AMBOS TIPOS ACTIVOS ✓✓✓
+				};
+
+				var result = await _userManager.CreateAsync(user, password);
+
+				if (result.Succeeded)
+				{
+					// Asignar rol según tipo
+					await _userManager.AddToRoleAsync(user, userType);
+
+					if (userType == "Cliente")
+					{
+						// Iniciar sesión automáticamente para clientes
+						await _signInManager.SignInAsync(user, isPersistent: false);
+						return RedirectToAction("Index", "Home");
+					}
+					else // Empleado
+					{
+						// Para empleados: mostrar página de confirmación
+						// Ahora pueden intentar login inmediatamente
+						return RedirectToAction("RegistroExitoso");
+					}
+				}
+				else
+				{
+					// Si falla el registro, mostrar errores
+					foreach (var error in result.Errors)
+					{
+						ModelState.AddModelError(string.Empty, error.Description);
+					}
+				}
+			}
+			catch (Exception ex)
+			{
+				ModelState.AddModelError(string.Empty, $"Error al registrarse: {ex.Message}");
+			}
+
+			return View();
+		}
+
+================================================================================
+FIN - CAMBIOS COMPLETADOS
+================================================================================
+
+RESUMEN DE CAMBIOS:
+  1. Línea 206: IsActive = true (en lugar de ternario)
+  2. Método POST Login(): Reemplazar completamente con nueva versión
+  3. Método POST Register(): Reemplazar completamente con nueva versión
+
+AFTER MAKING CHANGES:
+  1. Save file
+  2. Run: dotnet build
+  3. If successful, continue with SQL script
+  4. Test login functionality
+
+PRÓXIMO PASO: Ejecutar el archivo Migrations/MigrationEmpleados.sql
