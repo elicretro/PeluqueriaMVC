@@ -1,4 +1,3 @@
-
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -17,7 +16,6 @@ public class TurnosController : Controller
     // GET: Turnos
     public async Task<IActionResult> Index()
     {
-        // Agregamos .Include para traer los datos reales de los clientes, mascotas y empleados
         var turnos = await _context.Turnos
             .Include(t => t.Cliente)
             .Include(t => t.Mascota)
@@ -65,20 +63,34 @@ public class TurnosController : Controller
 
         if (!esEmpleado)
         {
-            // 1. Buscamos el cliente logueado por su email (User.Identity.Name)
             var emailUsuario = User.Identity?.Name;
-            var clienteLogueado = await _context.Clientes.FirstOrDefaultAsync(c => c.Email == emailUsuario);
+            var clienteLogueado = await _context.Personas
+                .OfType<Cliente>()
+                .FirstOrDefaultAsync(c => c.Email == emailUsuario);
 
             if (clienteLogueado != null)
             {
-                // Asignamos automáticamente el ID del cliente logueado
                 turno.ClienteId = clienteLogueado.Id;
             }
 
             turno.Estado = EstadoTurno.Pendiente;
 
             ModelState.Remove("Estado");
-            ModelState.Remove("ClienteId"); // Removemos de la validación porque lo asignamos acá
+            ModelState.Remove("ClienteId");
+        }
+
+        // 1. Validación de compatibilidad de servicio y empleado en el servidor
+        var empleado = await _context.Empleados.FindAsync(turno.EmpleadoId);
+        if (empleado != null)
+        {
+            if (!EsEmpleadoAptoParaServicio(empleado.Puesto, turno.Tipo))
+            {
+                ModelState.AddModelError("EmpleadoId", $"El empleado {empleado.Nombre} {empleado.Apellido} ({empleado.Puesto}) no realiza el servicio de {turno.Tipo}.");
+            }
+        }
+        else
+        {
+            ModelState.AddModelError("EmpleadoId", "El empleado seleccionado no es válido.");
         }
 
         // 2. Validación de fecha pasada
@@ -130,43 +142,8 @@ public class TurnosController : Controller
             return RedirectToAction(nameof(Index));
         }
 
-        // Si falló, volvemos a cargar filtrando según corresponda
         await CargarDesplegablesConFiltro(turno);
         return View(turno);
-    }
-
-    // NUEVO Método auxiliar asincrónico para cargar desplegables filtrados por usuario
-    private async Task CargarDesplegablesConFiltro(Turno turno = null)
-    {
-        bool esEmpleado = User.IsInRole("Empleado");
-        var emailUsuario = User.Identity?.Name;
-
-        if (esEmpleado)
-        {
-            // Traemos los clientes usando OfType<Cliente>()
-            var clientes = await _context.Personas.OfType<Cliente>().ToListAsync();
-            ViewData["ClienteId"] = new SelectList(clientes, "Id", "Apellido", turno?.ClienteId);
-            ViewData["MascotaId"] = new SelectList(_context.Mascotas, "Id", "Nombre", turno?.MascotaId);
-        }
-        else
-        {
-            // Buscamos el ID del cliente logueado desde la tabla Personas filtrando el tipo
-            var clienteLogueado = await _context.Personas
-                .OfType<Cliente>()
-                .Include(c => c.Mascotas)
-                .FirstOrDefaultAsync(c => c.Email == emailUsuario);
-
-            int clienteId = clienteLogueado?.Id ?? 0;
-
-            ViewData["ClienteId"] = new SelectList(new[] { clienteLogueado }.Where(c => c != null), "Id", "Apellido", clienteId);
-
-            var mascotasDelCliente = clienteLogueado?.Mascotas ?? new List<Mascota>();
-            ViewData["MascotaId"] = new SelectList(mascotasDelCliente, "Id", "Nombre", turno?.MascotaId);
-        }
-
-        ViewData["EmpleadoId"] = new SelectList(_context.Empleados, "Id", "Apellido", turno?.EmpleadoId);
-        ViewData["TipoServicioList"] = new SelectList(Enum.GetValues(typeof(TipoServicio)));
-        ViewData["EstadoTurnoList"] = new SelectList(Enum.GetValues(typeof(EstadoTurno)));
     }
 
     // GET: Turnos/Edit/5
@@ -183,7 +160,7 @@ public class TurnosController : Controller
             return NotFound();
         }
 
-        CargarDesplegables(turno);
+        await CargarDesplegablesConFiltro(turno);
         return View(turno);
     }
 
@@ -197,11 +174,24 @@ public class TurnosController : Controller
             return NotFound();
         }
 
-        // Al igual que en la creación, si el usuario no es empleado no debería poder alterar el Estado
         bool esEmpleado = User.IsInRole("Empleado");
         if (!esEmpleado)
         {
             ModelState.Remove("Estado");
+        }
+
+        // Validación de puesto del empleado en edición
+        var empleado = await _context.Empleados.FindAsync(turno.EmpleadoId);
+        if (empleado != null)
+        {
+            if (!EsEmpleadoAptoParaServicio(empleado.Puesto, turno.Tipo))
+            {
+                ModelState.AddModelError("EmpleadoId", $"El empleado {empleado.Nombre} {empleado.Apellido} ({empleado.Puesto}) no realiza el servicio de {turno.Tipo}.");
+            }
+        }
+        else
+        {
+            ModelState.AddModelError("EmpleadoId", "El empleado seleccionado no es válido.");
         }
 
         if (ModelState.IsValid)
@@ -225,7 +215,7 @@ public class TurnosController : Controller
             return RedirectToAction(nameof(Index));
         }
 
-        CargarDesplegables(turno);
+        await CargarDesplegablesConFiltro(turno);
         return View(turno);
     }
 
@@ -266,20 +256,96 @@ public class TurnosController : Controller
         return RedirectToAction(nameof(Index));
     }
 
+    // =========================================================
+    // ENDPOINT AJAX: Retorna los empleados aptos según el TipoServicio elegido
+    // =========================================================
+    [HttpGet]
+    public async Task<IActionResult> GetEmpleadosPorServicio(TipoServicio tipoServicio)
+    {
+        var todosLosEmpleados = await _context.Empleados.ToListAsync();
+
+        // Filtramos en memoria aplicando la regla de negocio
+        var empleadosFiltrados = todosLosEmpleados
+            .Where(e => EsEmpleadoAptoParaServicio(e.Puesto, tipoServicio))
+            .Select(e => new {
+                id = e.Id,
+                nombreCompleto = $"{e.Apellido}, {e.Nombre} ({e.Puesto})"
+            })
+            .ToList();
+
+        return Json(empleadosFiltrados);
+    }
+
+    // =========================================================
+    // MÉTODOS AUXILIARES PRIVADOS
+    // =========================================================
+
     private bool TurnoExists(int? idturno)
     {
         return _context.Turnos.Any(e => e.IdTurno == idturno);
     }
 
-    // Método auxiliar para evitar repetir código de los SelectList
-    private void CargarDesplegables(Turno turno = null)
+    // Carga los desplegables aplicando filtros dinámicos iniciales si ya hay un turno con datos
+    private async Task CargarDesplegablesConFiltro(Turno turno = null)
     {
-        ViewData["ClienteId"] = new SelectList(_context.Clientes, "Id", "Apellido", turno?.ClienteId);
-        ViewData["MascotaId"] = new SelectList(_context.Mascotas, "Id", "Nombre", turno?.MascotaId);
-        ViewData["EmpleadoId"] = new SelectList(_context.Empleados, "Id", "Apellido", turno?.EmpleadoId);
+        bool esEmpleado = User.IsInRole("Empleado");
+        var emailUsuario = User.Identity?.Name;
 
-        // Cargamos los Enums para pasárselos a la vista como listas
-        ViewData["TipoServicioList"] = new SelectList(Enum.GetValues(typeof(TipoServicio)));
-        ViewData["EstadoTurnoList"] = new SelectList(Enum.GetValues(typeof(EstadoTurno)));
+        if (esEmpleado)
+        {
+            var clientes = await _context.Personas.OfType<Cliente>().ToListAsync();
+            ViewData["ClienteId"] = new SelectList(clientes, "Id", "Apellido", turno?.ClienteId);
+            ViewData["MascotaId"] = new SelectList(_context.Mascotas, "Id", "Nombre", turno?.MascotaId);
+        }
+        else
+        {
+            var clienteLogueado = await _context.Personas
+                .OfType<Cliente>()
+                .Include(c => c.Mascotas)
+                .FirstOrDefaultAsync(c => c.Email == emailUsuario);
+
+            int clienteId = clienteLogueado?.Id ?? 0;
+
+            ViewData["ClienteId"] = new SelectList(new[] { clienteLogueado }.Where(c => c != null), "Id", "Apellido", clienteId);
+
+            var mascotasDelCliente = clienteLogueado?.Mascotas ?? new List<Mascota>();
+            ViewData["MascotaId"] = new SelectList(mascotasDelCliente, "Id", "Nombre", turno?.MascotaId);
+        }
+
+        // Si ya hay un tipo de servicio preseleccionado, filtramos los empleados iniciales, si no, traemos a los no-recepcionistas
+        List<Empleado> empleadosDisponibles;
+        if (turno != null)
+        {
+            var todos = await _context.Empleados.ToListAsync();
+            empleadosDisponibles = todos.Where(e => EsEmpleadoAptoParaServicio(e.Puesto, turno.Tipo)).ToList();
+        }
+        else
+        {
+            empleadosDisponibles = await _context.Empleados.Where(e => e.Puesto != TipoPuesto.Recepcionista).ToListAsync();
+        }
+
+        ViewData["EmpleadoId"] = new SelectList(empleadosDisponibles, "Id", "Apellido", turno?.EmpleadoId);
+        ViewData["TipoServicioList"] = new SelectList(Enum.GetValues(typeof(TipoServicio)), turno?.Tipo);
+        ViewData["EstadoTurnoList"] = new SelectList(Enum.GetValues(typeof(EstadoTurno)), turno?.Estado);
+    }
+
+    // Regla de compatibilidad centralizada (Para no repetir lógica en Create, Edit y Endpoint AJAX)
+    private static bool EsEmpleadoAptoParaServicio(TipoPuesto puesto, TipoServicio servicio)
+    {
+        // El recepcionista nunca trabaja en servicios estéticos o de salud
+        if (puesto == TipoPuesto.Recepcionista) return false;
+
+        // Adaptá los nombres de tus Enums de TipoServicio si se llaman diferente
+        switch (servicio)
+        {
+            case TipoServicio.Peluqueria:
+                return puesto == TipoPuesto.Peluquero;
+
+            case TipoServicio.Veterinaria:
+                return puesto == TipoPuesto.Veterinario;
+
+            default:
+                return false;
+        }
     }
 }

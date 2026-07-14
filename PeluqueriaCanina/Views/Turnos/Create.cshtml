@@ -18,26 +18,41 @@
                 <span asp-validation-for="FechaHora" class="text-danger"></span>
             </div>
 
-            <div class="mb-3">
-                <label asp-for="ClienteId" class="control-label">Cliente</label>
-                <select asp-for="ClienteId" class="form-select" asp-items="ViewBag.ClienteId">
-                    <option value="">-- Seleccione un Cliente --</option>
-                </select>
-                <span asp-validation-for="ClienteId" class="text-danger"></span>
-            </div>
+            @if (User.IsInRole("Empleado"))
+            {
+                <div class="mb-3">
+                    <label asp-for="ClienteId" class="control-label">Cliente</label>
+                    <select asp-for="ClienteId" id="clienteSelect" class="form-select" asp-items="ViewBag.ClienteId">
+                        <option value="">-- Seleccione un Cliente --</option>
+                    </select>
+                    <span asp-validation-for="ClienteId" class="text-danger"></span>
+                </div>
+            }
+            else
+            {
+                <input type="hidden" asp-for="ClienteId" value="@(ViewBag.ClienteId?.SelectedValue ?? "")" />
+            }
 
             <div class="mb-3">
                 <label asp-for="MascotaId" class="control-label">Mascota</label>
-                <select asp-for="MascotaId" class="form-select" asp-items="ViewBag.MascotaId">
+                <select asp-for="MascotaId" id="mascotaSelect" class="form-select" asp-items="ViewBag.MascotaId">
                     <option value="">-- Seleccione una Mascota --</option>
                 </select>
                 <span asp-validation-for="MascotaId" class="text-danger"></span>
             </div>
 
             <div class="mb-3">
+                <label asp-for="Tipo" class="control-label">Tipo de Servicio</label>
+                <select asp-for="Tipo" id="tipoServicioSelect" class="form-select" asp-items="ViewBag.TipoServicioList">
+                    <option value="">-- Seleccione el Tipo de Servicio --</option>
+                </select>
+                <span asp-validation-for="Tipo" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
                 <label asp-for="EmpleadoId" class="control-label">Empleado Asignado</label>
-                <select asp-for="EmpleadoId" class="form-select" asp-items="ViewBag.EmpleadoId">
-                    <option value="">-- Seleccione un Empleado --</option>
+                <select asp-for="EmpleadoId" id="empleadoSelect" class="form-select" asp-items="ViewBag.EmpleadoId">
+                    <option value="">-- Primero elija un servicio --</option>
                 </select>
                 <span asp-validation-for="EmpleadoId" class="text-danger"></span>
             </div>
@@ -58,14 +73,6 @@
             }
 
             <div class="mb-3">
-                <label asp-for="Tipo" class="control-label">Tipo de Servicio</label>
-                <select asp-for="Tipo" class="form-select" asp-items="ViewBag.TipoServicioList">
-                    <option value="">-- Seleccione el Tipo de Servicio --</option>
-                </select>
-                <span asp-validation-for="Tipo" class="text-danger"></span>
-            </div>
-
-            <div class="mb-3">
                 <button type="submit" class="btn btn-primary">Guardar Turno</button>
                 <a asp-action="Index" class="btn btn-secondary ms-2">Volver</a>
             </div>
@@ -81,11 +88,58 @@
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             const inputFecha = document.getElementById("fechaHoraInput");
+            const tipoServicioSelect = document.getElementById("tipoServicioSelect");
+            const empleadoSelect = document.getElementById("empleadoSelect");
 
-            // 1. Impedir elegir fechas pasadas usando el atributo "min" de HTML5
+            // ==========================================
+            // 1. FILTRADO DINÁMICO DE EMPLEADOS POR SERVICIO
+            // ==========================================
+            async function cargarEmpleados() {
+                const tipoServicio = tipoServicioSelect.value;
+
+                // Si no hay tipo de servicio seleccionado, reseteamos el dropdown de empleados
+                if (!tipoServicio) {
+                    empleadoSelect.innerHTML = '<option value="">-- Primero elija un servicio --</option>';
+                    return;
+                }
+
+                try {
+                    // Llamamos al endpoint que creamos en el TurnosController
+                    const url = `/Turnos/GetEmpleadosPorServicio?tipoServicio=${tipoServicio}`;
+                    const response = await fetch(url);
+                    if (!response.ok) throw new Error("Error en la petición de empleados.");
+
+                    const empleados = await response.json();
+
+                    // Limpiamos las opciones actuales
+                    empleadoSelect.innerHTML = '<option value="">-- Seleccione un Empleado --</option>';
+
+                    // Agregamos las nuevas opciones filtradas
+                    empleados.forEach(emp => {
+                        const option = document.createElement("option");
+                        option.value = emp.id;
+                        option.textContent = emp.nombreCompleto;
+                        empleadoSelect.appendChild(option);
+                    });
+
+                } catch (error) {
+                    console.error("Error cargando los empleados:", error);
+                }
+            }
+
+            // Escuchamos los cambios en el selector de Tipo de Servicio
+            tipoServicioSelect.addEventListener("change", cargarEmpleados);
+
+            // Si al cargar la página ya hay un servicio preseleccionado (por ejemplo, al volver de una validación fallida)
+            if (tipoServicioSelect.value) {
+                cargarEmpleados();
+            }
+
+
+            // ==========================================
+            // 2. VALIDACIÓN DE HORARIOS Y FECHAS
+            // ==========================================
             const ahora = new Date();
-
-            // Formateamos la fecha actual local para que la entienda el input datetime-local (YYYY-MM-DDTHH:mm)
             const anio = ahora.getFullYear();
             const mes = String(ahora.getMonth() + 1).padStart(2, '0');
             const dia = String(ahora.getDate()).padStart(2, '0');
@@ -95,15 +149,13 @@
             const fechaMinima = `${anio}-${mes}-${dia}T${horas}:${minutos}`;
             inputFecha.min = fechaMinima;
 
-            // 2. Validación extra en el submit por si usan teclados o navegadores viejos
             inputFecha.addEventListener("change", function () {
                 const fechaSeleccionada = new Date(this.value);
                 const hora = fechaSeleccionada.getHours();
 
-                // Supongamos un límite de atención: Lunes a Sábados de 08:00 a 19:00
                 if (hora < 8 || hora >= 19) {
                     alert("La peluquería canina atiende de 08:00 a 19:00 hs. Por favor, seleccioná un horario válido.");
-                    this.value = ""; // Resetea el input si está fuera de rango
+                    this.value = "";
                 }
             });
         });

@@ -1,98 +1,103 @@
 @model PeluqueriaCanina.Models.Turno
 
 @{
-    ViewData["Title"] = "Delete";
+    ViewData["Title"] = "Eliminar Turno";
 }
 
-<h1>Delete</h1>
+<div class="container mt-4">
+    <div class="card border-danger mb-4">
+        <div class="card-header bg-danger text-white">
+            <h3 class="mb-0">¿Estás seguro de que querés eliminar este turno?</h3>
+        </div>
+        <div class="card-body">
+            <h4 class="card-title text-muted">Resumen del Turno</h4>
+            <hr />
 
-<h3>Are you sure you want to delete this?</h3>
-<div>
-    <h4>PeluqueriaCanina.Models.Turno</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.FechaHora)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.FechaHora)
-        </dd>
-    </dl>
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.ClienteId)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.ClienteId)
-        </dd>
-    </dl>
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Cliente)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Cliente)
-        </dd>
-    </dl>
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.MascotaId)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.MascotaId)
-        </dd>
-    </dl>
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Mascota)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Mascota)
-        </dd>
-    </dl>
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.EmpleadoId)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.EmpleadoId)
-        </dd>
-    </dl>
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Empleado)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Empleado)
-        </dd>
-    </dl>
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Estado)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Estado)
-        </dd>
-    </dl>
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Tipo)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Tipo)
-        </dd>
-    </dl>
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.ResumenCita)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.ResumenCita)
-        </dd>
-    </dl>
-    <form asp-action="Delete">
-        <input type="hidden" asp-for="IdTurno" />
-        <input type="submit" value="Delete" class="btn btn-danger" /> |
-        <a asp-action="Index">Back to List</a>
-    </form>
+            <dl class="row fs-6">
+                <dt class="col-sm-3 fw-bold text-secondary">Horario del Turno</dt>
+                <dd class="col-sm-9">
+                    @Model.FechaHora.ToString("dd/MM/yyyy HH:mm") hs
+                </dd>
+
+                <dt class="col-sm-3 fw-bold text-secondary">Cliente</dt>
+                <dd class="col-sm-9">
+                    @if (Model.Cliente != null)
+                    {
+                        <span>@Model.Cliente.Apellido, @Model.Cliente.Nombre</span>
+                    }
+                    else
+                    {
+                        <span class="text-muted">No especificado</span>
+                    }
+                </dd>
+
+                <dt class="col-sm-3 fw-bold text-secondary">Mascota</dt>
+                <dd class="col-sm-9">
+                    @if (Model.Mascota != null)
+                    {
+                        <span>@Model.Mascota.Nombre</span>
+                    }
+                    else
+                    {
+                        <span class="text-muted">No especificado</span>
+                    }
+                </dd>
+
+                <dt class="col-sm-3 fw-bold text-secondary">Tipo de Servicio</dt>
+                <dd class="col-sm-9">
+                    <span class="badge bg-info text-dark">@Model.Tipo</span>
+                </dd>
+
+                <dt class="col-sm-3 fw-bold text-secondary">Empleado Asignado</dt>
+                <dd class="col-sm-9">
+                    @if (Model.Empleado != null)
+                    {
+                        <span>@Model.Empleado.Apellido, @Model.Empleado.Nombre</span>
+                    }
+                    else
+                    {
+                        <span class="text-muted">Sin asignar</span>
+                    }
+                </dd>
+
+                <dt class="col-sm-3 fw-bold text-secondary">Estado</dt>
+                <dd class="col-sm-9">
+                    @{
+                        string badgeClass = "bg-secondary";
+                        string estadoStr = Model.Estado.ToString().ToLower();
+
+                        if (estadoStr == "pendiente")
+                        {
+                            badgeClass = "bg-warning text-dark";
+                        }
+                        else if (estadoStr == "confirmado")
+                        {
+                            badgeClass = "bg-success";
+                        }
+                        else if (estadoStr == "cancelado")
+                        {
+                            badgeClass = "bg-danger";
+                        }
+                        else if (estadoStr == "ausente")
+                        {
+                            badgeClass = "bg-dark";
+                        }
+                    }
+                    <span class="badge @badgeClass">@Model.Estado</span>
+                </dd>
+
+                <dt class="col-sm-3 fw-bold text-secondary">Descripción de la Cita</dt>
+                <dd class="col-sm-9">
+                    <span class="fst-italic text-muted">@Model.ResumenCita</span>
+                </dd>
+            </dl>
+        </div>
+        <div class="card-footer bg-light d-flex justify-content-end">
+            <form asp-action="Delete">
+                <input type="hidden" name="idturno" value="@Model.IdTurno" />
+                <button type="submit" class="btn btn-danger">Confirmar Eliminar</button>
+                <a asp-action="Index" class="btn btn-secondary ms-2">Cancelar</a>
+            </form>
+        </div>
+    </div>
 </div>

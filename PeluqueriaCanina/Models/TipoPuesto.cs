@@ -4,7 +4,6 @@
     {
         Peluquero,
         Bañador,
-        Estilista,
         Recepcionista,
         Veterinario
     }
