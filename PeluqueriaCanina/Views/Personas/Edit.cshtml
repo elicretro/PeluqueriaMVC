@@ -5,7 +5,7 @@
     bool esEmpleado = Model is PeluqueriaCanina.Models.Empleado;
     var emp = Model as PeluqueriaCanina.Models.Empleado;
 
-    string puestoActual = esEmpleado ? emp.Puesto : "";
+    string puestoActual = esEmpleado ? emp.Puesto.ToString() : "";
     string especialidadActual = esEmpleado ? emp.Especialidad.ToString() : "";
 }
 

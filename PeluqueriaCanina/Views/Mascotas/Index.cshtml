@@ -30,6 +30,11 @@
             <th>
                 @Html.DisplayNameFor(model => model.Peso)
             </th>
+            @if (User.IsInRole("Empleado"))
+            {
+                <th>Dueño</th>
+            }
+            <th>Acciones</th>
             <th></th>
         </tr>
     </thead>
@@ -54,6 +59,11 @@
             <td>
                 @Html.DisplayFor(model => item.Peso)
             </td>
+                @if (User.IsInRole("Empleado"))
+                {
+                    <td>@item.Cliente?.Apellido, @item.Cliente?.Nombre</td>
+                }
+                <td>
             <td>
                 <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
                 <a asp-action="Details" asp-route-id="@item.Id">Details</a> |

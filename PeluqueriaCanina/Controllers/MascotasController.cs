@@ -16,9 +16,29 @@ public class MascotasController : Controller
     }
 
     // GET: MASCOTAS
-    public async Task<IActionResult> Index()    
+    public async Task<IActionResult> Index()
     {
-        return View(await _context.Mascotas.ToListAsync());
+        bool esEmpleado = User.IsInRole("Empleado"); // Reemplazar por tu validación de roles real
+
+        if (esEmpleado)
+        {
+            // El empleado ve todas las mascotas registradas en el sistema
+            return View(await _context.Mascotas.ToListAsync());
+        }
+        else
+        {
+            // El cliente solo ve sus propias mascotas
+            var emailUsuario = User.Identity?.Name;
+
+            // Buscamos al cliente logueado con sus mascotas cargadas (Eager Loading)
+            var clienteLogueado = await _context.Personas
+                .OfType<Cliente>()
+                .Include(c => c.Mascotas)
+                .FirstOrDefaultAsync(c => c.Email == emailUsuario);
+
+            var misMascotas = clienteLogueado?.Mascotas ?? new List<Mascota>();
+            return View(misMascotas);
+        }
     }
 
     // GET: MASCOTAS/Details/5
@@ -40,16 +60,33 @@ public class MascotasController : Controller
     }
 
     // GET: MASCOTAS/Create
-    public IActionResult Create(int idCliente)
+    public async Task<IActionResult> Create(int? idCliente)
     {
-        // Guardamos el ID en el ViewBag para que la vista lo tenga a mano
-        ViewBag.IdCliente = idCliente;
+        bool esEmpleado = User.IsInRole("Empleado");
+
+        if (!esEmpleado)
+        {
+            // Si es cliente, autodetectamos su ID para que no tenga que pasarse por parámetro
+            var emailUsuario = User.Identity?.Name;
+            var clienteLogueado = await _context.Personas
+                .OfType<Cliente>()
+                .FirstOrDefaultAsync(c => c.Email == emailUsuario);
+
+            if (clienteLogueado != null)
+            {
+                ViewBag.IdCliente = clienteLogueado.Id;
+            }
+        }
+        else
+        {
+            // El empleado sí usa el idCliente recibido desde el perfil del cliente
+            ViewBag.IdCliente = idCliente;
+        }
+
         return View();
     }
 
     // POST: MASCOTAS/Create
-    // To protect from overposting attacks, enable the specific properties you want to bind to.
-    // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create([Bind("Nombre,Edad,Tipo,Raza,Peso")] Mascota mascota, int idCliente)
@@ -57,6 +94,22 @@ public class MascotasController : Controller
         // Limpiamos errores de validación de campos que no enviamos
         ModelState.Remove("Identificacion");
         ModelState.Remove("Cliente");
+
+        bool esEmpleado = User.IsInRole("Empleado");
+
+        // Si es un cliente, por seguridad volvemos a verificar su ID de base de datos
+        if (!esEmpleado)
+        {
+            var emailUsuario = User.Identity?.Name;
+            var clienteLogueado = await _context.Personas
+                .OfType<Cliente>()
+                .FirstOrDefaultAsync(c => c.Email == emailUsuario);
+
+            if (clienteLogueado != null)
+            {
+                idCliente = clienteLogueado.Id;
+            }
+        }
 
         if (ModelState.IsValid)
         {
@@ -68,16 +121,25 @@ public class MascotasController : Controller
                     cliente.Mascotas = new List<Mascota>();
                 }
 
-                // BORRAMOS la línea que daba error. Solo agregamos la mascota al cliente directamente.
                 cliente.Mascotas.Add(mascota);
                 await _context.SaveChangesAsync();
 
-                return RedirectToAction("Edit", "Personas", new { id = idCliente });
+                // Redirección inteligente según quién sea:
+                if (esEmpleado)
+                {
+                    // Al empleado lo mandamos de vuelta al perfil de ese cliente
+                    return RedirectToAction("Edit", "Personas", new { id = idCliente });
+                }
+                else
+                {
+                    // Al cliente lo mandamos a su lista general de mascotas
+                    return RedirectToAction(nameof(Index));
+                }
             }
         }
 
-    // Si falla algo, recargamos el ViewBag para no perder el ID
-    ViewBag.IdCliente = idCliente;
+        // Si falla algo, recargamos el ViewBag para no perder el ID
+        ViewBag.IdCliente = idCliente;
         return View(mascota);
     }
 
@@ -98,8 +160,6 @@ public class MascotasController : Controller
     }
 
     // POST: MASCOTAS/Edit/5
-    // To protect from overposting attacks, enable the specific properties you want to bind to.
-    // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, [Bind("Id,Nombre,Edad,Tipo,Raza,Peso")] Mascota mascota, int idCliente)
@@ -127,7 +187,16 @@ public class MascotasController : Controller
                     throw;
                 }
             }
-            return RedirectToAction("Details", "Personas", new { id = idCliente });
+
+            bool esEmpleado = User.IsInRole("Empleado");
+            if (esEmpleado)
+            {
+                return RedirectToAction("Details", "Personas", new { id = idCliente });
+            }
+            else
+            {
+                return RedirectToAction(nameof(Index));
+            }
         }
         return View(mascota);
     }
@@ -161,8 +230,16 @@ public class MascotasController : Controller
             _context.Mascotas.Remove(mascota);
             await _context.SaveChangesAsync();
         }
-        // Te devuelve directo a los detalles del cliente que estábamos viendo
-        return RedirectToAction("Details", "Personas", new { id = idCliente });
+
+        bool esEmpleado = User.IsInRole("Empleado");
+        if (esEmpleado)
+        {
+            return RedirectToAction("Details", "Personas", new { id = idCliente });
+        }
+        else
+        {
+            return RedirectToAction(nameof(Index));
+        }
     }
 
     private bool MascotaExists(int? id)

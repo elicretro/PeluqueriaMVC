@@ -1,0 +1,111 @@
+@model PeluqueriaCanina.Models.Turno
+
+@{
+    ViewData["Title"] = "Crear Turno";
+}
+
+<h1>Crear</h1>
+<h4>Turno</h4>
+<hr />
+<div class="row">
+    <div class="col-md-6">
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <div class="mb-3">
+                <label asp-for="FechaHora" class="control-label">Horario del Turno</label>
+                <input asp-for="FechaHora" class="form-control" type="datetime-local" id="fechaHoraInput" />
+                <span asp-validation-for="FechaHora" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="ClienteId" class="control-label">Cliente</label>
+                <select asp-for="ClienteId" class="form-select" asp-items="ViewBag.ClienteId">
+                    <option value="">-- Seleccione un Cliente --</option>
+                </select>
+                <span asp-validation-for="ClienteId" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="MascotaId" class="control-label">Mascota</label>
+                <select asp-for="MascotaId" class="form-select" asp-items="ViewBag.MascotaId">
+                    <option value="">-- Seleccione una Mascota --</option>
+                </select>
+                <span asp-validation-for="MascotaId" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="EmpleadoId" class="control-label">Empleado Asignado</label>
+                <select asp-for="EmpleadoId" class="form-select" asp-items="ViewBag.EmpleadoId">
+                    <option value="">-- Seleccione un Empleado --</option>
+                </select>
+                <span asp-validation-for="EmpleadoId" class="text-danger"></span>
+            </div>
+
+            @if (User.IsInRole("Empleado"))
+            {
+                <div class="mb-3">
+                    <label asp-for="Estado" class="control-label">Estado del Turno</label>
+                    <select asp-for="Estado" class="form-select" asp-items="ViewBag.EstadoTurnoList">
+                        <option value="">-- Seleccione el Estado --</option>
+                    </select>
+                    <span asp-validation-for="Estado" class="text-danger"></span>
+                </div>
+            }
+            else
+            {
+                <input type="hidden" asp-for="Estado" value="Pendiente" />
+            }
+
+            <div class="mb-3">
+                <label asp-for="Tipo" class="control-label">Tipo de Servicio</label>
+                <select asp-for="Tipo" class="form-select" asp-items="ViewBag.TipoServicioList">
+                    <option value="">-- Seleccione el Tipo de Servicio --</option>
+                </select>
+                <span asp-validation-for="Tipo" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <button type="submit" class="btn btn-primary">Guardar Turno</button>
+                <a asp-action="Index" class="btn btn-secondary ms-2">Volver</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const inputFecha = document.getElementById("fechaHoraInput");
+
+            // 1. Impedir elegir fechas pasadas usando el atributo "min" de HTML5
+            const ahora = new Date();
+
+            // Formateamos la fecha actual local para que la entienda el input datetime-local (YYYY-MM-DDTHH:mm)
+            const anio = ahora.getFullYear();
+            const mes = String(ahora.getMonth() + 1).padStart(2, '0');
+            const dia = String(ahora.getDate()).padStart(2, '0');
+            const horas = String(ahora.getHours()).padStart(2, '0');
+            const minutos = String(ahora.getMinutes()).padStart(2, '0');
+
+            const fechaMinima = `${anio}-${mes}-${dia}T${horas}:${minutos}`;
+            inputFecha.min = fechaMinima;
+
+            // 2. Validación extra en el submit por si usan teclados o navegadores viejos
+            inputFecha.addEventListener("change", function () {
+                const fechaSeleccionada = new Date(this.value);
+                const hora = fechaSeleccionada.getHours();
+
+                // Supongamos un límite de atención: Lunes a Sábados de 08:00 a 19:00
+                if (hora < 8 || hora >= 19) {
+                    alert("La peluquería canina atiende de 08:00 a 19:00 hs. Por favor, seleccioná un horario válido.");
+                    this.value = ""; // Resetea el input si está fuera de rango
+                }
+            });
+        });
+    </script>
+}
