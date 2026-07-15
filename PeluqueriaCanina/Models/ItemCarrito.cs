@@ -5,7 +5,7 @@ namespace PeluqueriaCanina.Models
     public class ItemCarrito
     {
         public int Id { get; set; }
-
+        public int VentaId { get; set; }
         [ForeignKey("ProductoId")]
         public Producto Producto { get; set; }
         public int ProductoId { get; set; }

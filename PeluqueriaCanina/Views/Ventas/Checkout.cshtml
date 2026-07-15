@@ -1,0 +1,44 @@
+@model PeluqueriaCanina.Models.Carrito
+
+<h2>Checkout</h2>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Producto</th>
+            <th>Cantidad</th>
+            <th>Subtotal</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model.Items)
+        {
+            <tr>
+                <td>@item.Producto.Nombre</td>
+                <td>@item.Cantidad</td>
+                <td>$@item.Subtotal</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<h3>Total: $@Model.Total</h3>
+<form asp-controller="Ventas" asp-action="ConfirmarCompra" method="post">
+
+    <div class="mb-3">
+        <label for="metodoPago" class="form-label">Método de Pago</label>
+
+        <select id="metodoPago" name="metodoPago" class="form-select">
+            <option value="Efectivo">Efectivo</option>
+            <option value="TarjetaDebito">Tarjeta Débito</option>
+            <option value="TarjetaCredito">Tarjeta Crédito</option>
+            <option value="MercadoPago">Mercado Pago</option>
+            <option value="TransferenciaBancaria">Transferencia Bancaria</option>
+        </select>
+    </div>
+
+    <button type="submit" class="btn btn-primary">
+        Confirmar Compra
+    </button>
+
+</form>

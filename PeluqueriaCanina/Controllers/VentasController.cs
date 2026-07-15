@@ -3,20 +3,23 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PeluqueriaCanina.Models;
 using PeluqueriaCanina.Data;
-
+using PeluqueriaCanina.Helpers;
+using Microsoft.AspNetCore.Identity;
 public class VentasController : Controller
 {
     private readonly PeluqueriaContext _context;
-
-    public VentasController(PeluqueriaContext context)
+    private readonly UserManager<ApplicationUser> _userManager;
+ 
+    public VentasController(PeluqueriaContext context, UserManager<ApplicationUser> userManager)
     {
         _context = context;
+        _userManager = userManager;
     }
 
     // GET: VENTAS
     public async Task<IActionResult> Index()    
     {
-        return View(await _context.Venta.ToListAsync());
+        return View(await _context.Ventas.ToListAsync());
     }
 
     // GET: VENTAS/Details/5
@@ -27,7 +30,7 @@ public class VentasController : Controller
             return NotFound();
         }
 
-        var venta = await _context.Venta
+        var venta = await _context.Ventas
             .FirstOrDefaultAsync(m => m.Id == id);
         if (venta == null)
         {
@@ -67,7 +70,7 @@ public class VentasController : Controller
             return NotFound();
         }
 
-        var venta = await _context.Venta.FindAsync(id);
+        var venta = await _context.Ventas.FindAsync(id);
         if (venta == null)
         {
             return NotFound();
@@ -118,7 +121,7 @@ public class VentasController : Controller
             return NotFound();
         }
 
-        var venta = await _context.Venta
+        var venta = await _context.Ventas
             .FirstOrDefaultAsync(m => m.Id == id);
         if (venta == null)
         {
@@ -133,18 +136,66 @@ public class VentasController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int? id)
     {
-        var venta = await _context.Venta.FindAsync(id);
+        var venta = await _context.Ventas.FindAsync(id);
         if (venta != null)
         {
-            _context.Venta.Remove(venta);
+            _context.Ventas.Remove(venta);
         }
 
         await _context.SaveChangesAsync();
         return RedirectToAction(nameof(Index));
     }
 
+    public IActionResult Checkout()
+    {
+        var carrito = HttpContext.Session
+            .GetObjectFromJson<Carrito>("Carrito")
+            ?? new Carrito();
+
+        return View(carrito);
+    }
+
     private bool VentaExists(int? id)
     {
-        return _context.Venta.Any(e => e.Id == id);
+        return _context.Ventas.Any(e => e.Id == id);
+    }
+    [HttpPost]
+    public async Task<IActionResult> ConfirmarCompra(MetodoDePago metodoPago)
+    {
+        var carrito = HttpContext.Session
+            .GetObjectFromJson<Carrito>("Carrito")
+            ?? new Carrito();
+
+        var usuario = await _userManager.GetUserAsync(User);
+
+        if (usuario == null)
+        {
+            return Challenge(); // o RedirectToAction("Login", "Account")
+        }
+
+        var cliente = await _context.Clientes
+            .FirstOrDefaultAsync(c => c.Id == usuario.PersonaId);
+
+        if (cliente == null)
+        {
+            return Content("No se encontró el cliente.");
+        }
+
+        var venta = new Venta
+        {
+            Fecha = DateTime.Now,
+            Cliente = cliente,
+            MetodoPago = metodoPago,
+            Total = carrito.Total,
+            Detalle = carrito.Items
+        };
+
+        _context.Ventas.Add(venta);
+
+        await _context.SaveChangesAsync();
+
+        HttpContext.Session.Remove("Carrito");
+
+        return RedirectToAction(nameof(Index));
     }
 }

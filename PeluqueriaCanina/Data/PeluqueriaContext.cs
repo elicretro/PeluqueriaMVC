@@ -6,7 +6,7 @@ namespace PeluqueriaCanina.Data
 {
     public class PeluqueriaContext : IdentityDbContext<ApplicationUser>
     {
-        public DbSet<PeluqueriaCanina.Models.Venta> Venta { get; set; } = default!;
+     
 
         public PeluqueriaContext(DbContextOptions<PeluqueriaContext> options) : base(options)
         {
