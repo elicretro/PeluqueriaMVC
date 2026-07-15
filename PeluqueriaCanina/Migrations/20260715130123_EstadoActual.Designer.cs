@@ -12,15 +12,15 @@ using PeluqueriaCanina.Data;
 namespace PeluqueriaCanina.Migrations
 {
     [DbContext(typeof(PeluqueriaContext))]
-    [Migration("20260711173605_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20260715130123_EstadoActual")]
+    partial class EstadoActual
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.9")
+                .HasAnnotation("ProductVersion", "10.0.10")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -273,6 +273,32 @@ namespace PeluqueriaCanina.Migrations
                     b.ToTable("HistoriasClinicas");
                 });
 
+            modelBuilder.Entity("PeluqueriaCanina.Models.ItemCarrito", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Cantidad")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ProductoId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("VentaId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductoId");
+
+                    b.HasIndex("VentaId");
+
+                    b.ToTable("ItemsCarrito");
+                });
+
             modelBuilder.Entity("PeluqueriaCanina.Models.Mascota", b =>
                 {
                     b.Property<int>("Id")
@@ -281,7 +307,7 @@ namespace PeluqueriaCanina.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("ClienteId")
+                    b.Property<int>("ClienteId")
                         .HasColumnType("int");
 
                     b.Property<int>("Edad")
@@ -367,6 +393,9 @@ namespace PeluqueriaCanina.Migrations
                     b.Property<int>("Categoria")
                         .HasColumnType("int");
 
+                    b.Property<int>("CategoriaId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Descripcion")
                         .IsRequired()
                         .HasMaxLength(500)
@@ -425,6 +454,33 @@ namespace PeluqueriaCanina.Migrations
                     b.ToTable("Turnos");
                 });
 
+            modelBuilder.Entity("PeluqueriaCanina.Models.Venta", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ClienteId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("Fecha")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("MetodoPago")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("Total")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClienteId");
+
+                    b.ToTable("Ventas");
+                });
+
             modelBuilder.Entity("PeluqueriaCanina.Models.Cliente", b =>
                 {
                     b.HasBaseType("PeluqueriaCanina.Models.Persona");
@@ -445,10 +501,8 @@ namespace PeluqueriaCanina.Migrations
                     b.Property<int>("Legajo")
                         .HasColumnType("int");
 
-                    b.Property<string>("Puesto")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                    b.Property<int>("Puesto")
+                        .HasColumnType("int");
 
                     b.Property<decimal>("Sueldo")
                         .HasColumnType("decimal(18,2)");
@@ -536,11 +590,32 @@ namespace PeluqueriaCanina.Migrations
                     b.Navigation("Veterinario");
                 });
 
+            modelBuilder.Entity("PeluqueriaCanina.Models.ItemCarrito", b =>
+                {
+                    b.HasOne("PeluqueriaCanina.Models.Producto", "Producto")
+                        .WithMany()
+                        .HasForeignKey("ProductoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("PeluqueriaCanina.Models.Venta", null)
+                        .WithMany("Detalle")
+                        .HasForeignKey("VentaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Producto");
+                });
+
             modelBuilder.Entity("PeluqueriaCanina.Models.Mascota", b =>
                 {
-                    b.HasOne("PeluqueriaCanina.Models.Cliente", null)
+                    b.HasOne("PeluqueriaCanina.Models.Cliente", "Cliente")
                         .WithMany("Mascotas")
-                        .HasForeignKey("ClienteId");
+                        .HasForeignKey("ClienteId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Cliente");
                 });
 
             modelBuilder.Entity("PeluqueriaCanina.Models.Turno", b =>
@@ -568,6 +643,22 @@ namespace PeluqueriaCanina.Migrations
                     b.Navigation("Empleado");
 
                     b.Navigation("Mascota");
+                });
+
+            modelBuilder.Entity("PeluqueriaCanina.Models.Venta", b =>
+                {
+                    b.HasOne("PeluqueriaCanina.Models.Cliente", "Cliente")
+                        .WithMany()
+                        .HasForeignKey("ClienteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Cliente");
+                });
+
+            modelBuilder.Entity("PeluqueriaCanina.Models.Venta", b =>
+                {
+                    b.Navigation("Detalle");
                 });
 
             modelBuilder.Entity("PeluqueriaCanina.Models.Cliente", b =>

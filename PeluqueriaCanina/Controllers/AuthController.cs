@@ -203,7 +203,7 @@ namespace PeluqueriaCanina.Controllers
                     Email = email,
                     PersonaId = persona.Id,
                     TipoUsuario = userType,
-                    IsActive = userType == "Cliente" ? true : false // Empleados requieren activación
+                    IsActive = true// IsActive = userType == "Cliente" ? true : false // Empleados requieren activación
                 };
 
                 var result = await _userManager.CreateAsync(user, password);

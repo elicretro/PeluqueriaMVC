@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace PeluqueriaCanina.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class EstadoActual : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -39,7 +39,7 @@ namespace PeluqueriaCanina.Migrations
                     Discriminator = table.Column<string>(type: "nvarchar(8)", maxLength: 8, nullable: false),
                     NroCliente = table.Column<int>(type: "int", nullable: true),
                     Legajo = table.Column<int>(type: "int", nullable: true),
-                    Puesto = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    Puesto = table.Column<int>(type: "int", nullable: true),
                     Especialidad = table.Column<int>(type: "int", nullable: true),
                     Sueldo = table.Column<decimal>(type: "decimal(18,2)", nullable: true)
                 },
@@ -58,7 +58,8 @@ namespace PeluqueriaCanina.Migrations
                     Descripcion = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
                     Precio = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     Stock = table.Column<int>(type: "int", nullable: false),
-                    Categoria = table.Column<int>(type: "int", nullable: false)
+                    Categoria = table.Column<int>(type: "int", nullable: false),
+                    CategoriaId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -131,7 +132,7 @@ namespace PeluqueriaCanina.Migrations
                     Tipo = table.Column<int>(type: "int", nullable: false),
                     Raza = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Peso = table.Column<double>(type: "float", nullable: false),
-                    ClienteId = table.Column<int>(type: "int", nullable: true)
+                    ClienteId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -141,6 +142,28 @@ namespace PeluqueriaCanina.Migrations
                         column: x => x.ClienteId,
                         principalTable: "Personas",
                         principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Ventas",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Fecha = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ClienteId = table.Column<int>(type: "int", nullable: false),
+                    Total = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    MetodoPago = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Ventas", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Ventas_Personas_ClienteId",
+                        column: x => x.ClienteId,
+                        principalTable: "Personas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -278,20 +301,44 @@ namespace PeluqueriaCanina.Migrations
                         name: "FK_Turnos_Mascotas_MascotaId",
                         column: x => x.MascotaId,
                         principalTable: "Mascotas",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.NoAction);
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_Turnos_Personas_ClienteId",
                         column: x => x.ClienteId,
                         principalTable: "Personas",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.NoAction);
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_Turnos_Personas_EmpleadoId",
                         column: x => x.EmpleadoId,
                         principalTable: "Personas",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ItemsCarrito",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    VentaId = table.Column<int>(type: "int", nullable: false),
+                    ProductoId = table.Column<int>(type: "int", nullable: false),
+                    Cantidad = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ItemsCarrito", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ItemsCarrito_Productos_ProductoId",
+                        column: x => x.ProductoId,
+                        principalTable: "Productos",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.NoAction);
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_ItemsCarrito_Ventas_VentaId",
+                        column: x => x.VentaId,
+                        principalTable: "Ventas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateIndex(
@@ -349,6 +396,16 @@ namespace PeluqueriaCanina.Migrations
                 column: "VeterionarioId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_ItemsCarrito_ProductoId",
+                table: "ItemsCarrito",
+                column: "ProductoId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ItemsCarrito_VentaId",
+                table: "ItemsCarrito",
+                column: "VentaId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Mascotas_ClienteId",
                 table: "Mascotas",
                 column: "ClienteId");
@@ -367,6 +424,11 @@ namespace PeluqueriaCanina.Migrations
                 name: "IX_Turnos_MascotaId",
                 table: "Turnos",
                 column: "MascotaId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Ventas_ClienteId",
+                table: "Ventas",
+                column: "ClienteId");
         }
 
         /// <inheritdoc />
@@ -391,7 +453,7 @@ namespace PeluqueriaCanina.Migrations
                 name: "HistoriasClinicas");
 
             migrationBuilder.DropTable(
-                name: "Productos");
+                name: "ItemsCarrito");
 
             migrationBuilder.DropTable(
                 name: "Turnos");
@@ -401,6 +463,12 @@ namespace PeluqueriaCanina.Migrations
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");
+
+            migrationBuilder.DropTable(
+                name: "Productos");
+
+            migrationBuilder.DropTable(
+                name: "Ventas");
 
             migrationBuilder.DropTable(
                 name: "Mascotas");
