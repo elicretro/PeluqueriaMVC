@@ -6,6 +6,7 @@ using PeluqueriaCanina.Models;
 using PeluqueriaCanina.Data;
 
 [Authorize]
+[Authorize(Roles = "Empleado")]
 public class PersonasController : Controller
 {
     private readonly PeluqueriaContext _context;

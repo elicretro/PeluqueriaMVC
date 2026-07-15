@@ -14,9 +14,19 @@ public class ProductosController : Controller
     }
 
     // GET: PRODUCTOS
-    public async Task<IActionResult> Index()    
+    public async Task<IActionResult> Index()
     {
-        return View(await _context.Productos.ToListAsync());
+        if (User.IsInRole("Cliente"))
+        {
+            var productos = await _context.Productos
+                .Where(p => p.Stock > 0)
+                .ToListAsync();
+
+            return View(productos);
+        }
+
+        var todosLosProductos = await _context.Productos.ToListAsync();
+        return View(todosLosProductos);
     }
 
     // GET: PRODUCTOS/Details/5

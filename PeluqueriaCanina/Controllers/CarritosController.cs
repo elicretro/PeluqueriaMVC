@@ -40,17 +40,23 @@ namespace PeluqueriaCanina.Controllers
 
             if (itemExistente != null)
             {
-                itemExistente.Cantidad++;
+                if (itemExistente.Cantidad < producto.Stock)
+                {
+                    itemExistente.Cantidad++;
+                }
+                else
+                {
+                    TempData["Error"] =
+                        $"No hay más stock disponible de {producto.Nombre}.";
+                }
             }
             else
             {
                 carrito.Items.Add(new ItemCarrito
                 {
-
                     Producto = producto,
                     ProductoId = producto.Id,
                     Cantidad = 1
-
                 });
             }
 

@@ -1,10 +1,12 @@
 
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using PeluqueriaCanina.Models;
 using PeluqueriaCanina.Data;
 using PeluqueriaCanina.Helpers;
-using Microsoft.AspNetCore.Identity;
+using PeluqueriaCanina.Models;
+[Authorize(Roles = "Cliente")]
 public class VentasController : Controller
 {
     private readonly PeluqueriaContext _context;
@@ -58,8 +60,7 @@ public class VentasController : Controller
     }
 
     // POST: VENTAS/Create
-    // To protect from overposting attacks, enable the specific properties you want to bind to.
-    // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create([Bind("Id,Fecha,Cliente,Detalle,Total,MetodoPago")] Venta venta)
@@ -90,8 +91,7 @@ public class VentasController : Controller
     }
 
     // POST: VENTAS/Edit/5
-    // To protect from overposting attacks, enable the specific properties you want to bind to.
-    // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int? id, [Bind("Id,Fecha,Cliente,Detalle,Total,MetodoPago")] Venta venta)
@@ -165,7 +165,23 @@ public class VentasController : Controller
 
         return View(carrito);
     }
+    [Authorize(Roles = "Cliente")]
+    public async Task<IActionResult> MisCompras()
+    {
+        var usuario = await _userManager.GetUserAsync(User);
 
+        if (usuario == null)
+        {
+            return Challenge();
+        }
+
+        var ventas = await _context.Ventas
+            .Include(v => v.Cliente)
+            .Where(v => v.Cliente.Id == usuario.PersonaId)
+            .ToListAsync();
+
+        return View(ventas);
+    }
     private bool VentaExists(int? id)
     {
         return _context.Ventas.Any(e => e.Id == id);
@@ -200,6 +216,27 @@ public class VentasController : Controller
               Total = carrito.Total,
               Detalle = carrito.Items
           };*/
+        // 1. Verificar stock de todos los productos
+        foreach (var item in carrito.Items)
+        {
+            var producto = await _context.Productos
+                .FirstOrDefaultAsync(p => p.Id == item.Producto.Id);
+
+            if (producto == null)
+            {
+                return NotFound($"No existe el producto con Id {item.Producto.Id}.");
+            }
+
+            if (producto.Stock < item.Cantidad)
+            {
+                TempData["Error"] =
+      $"No hay stock suficiente para {producto.Nombre}.";
+
+                return RedirectToAction(nameof(Checkout));
+            }
+        }
+
+        // 2. Crear la venta
         var venta = new Venta
         {
             Fecha = DateTime.Now,
@@ -212,18 +249,20 @@ public class VentasController : Controller
 
         await _context.SaveChangesAsync();
 
+        // 3. Descontar stock y guardar detalle
         foreach (var item in carrito.Items)
         {
-            var itemVenta = new ItemCarrito
+            var producto = await _context.Productos
+                .FirstAsync(p => p.Id == item.Producto.Id);
+
+            producto.Stock -= item.Cantidad;
+
+            _context.ItemsCarrito.Add(new ItemCarrito
             {
                 VentaId = venta.Id,
-                ProductoId = item.Producto.Id,
+                ProductoId = producto.Id,
                 Cantidad = item.Cantidad
-            };
-
-            _context.ItemsCarrito.Add(itemVenta);
-
-
+            });
         }
 
         await _context.SaveChangesAsync();
