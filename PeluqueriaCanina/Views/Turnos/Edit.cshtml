@@ -4,81 +4,109 @@
     ViewData["Title"] = "Editar Turno";
 }
 
-<h1>Editar</h1>
-<h4>Turno</h4>
-<hr />
-<div class="row">
-    <div class="col-md-6">
-        <form asp-action="Edit">
-            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+<div class="container mt-4">
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h3 class="mb-0">Editar Turno</h3>
+        </div>
+        <div class="card-body">
+            <form asp-action="Edit">
+                <div asp-validation-summary="All" class="text-danger mb-3"></div>
 
-            <input type="hidden" asp-for="IdTurno" />
+                <input type="hidden" asp-for="IdTurno" />
 
-            <div class="mb-3">
-                <label asp-for="FechaHora" class="control-label">Horario del Turno</label>
-                <input asp-for="FechaHora" class="form-control" type="datetime-local" id="fechaHoraInput" />
-                <span asp-validation-for="FechaHora" class="text-danger"></span>
-            </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="FechaHora" class="form-label fw-bold">Horario del Turno</label>
 
-            @if (User.IsInRole("Empleado"))
-            {
-                <div class="mb-3">
-                    <label asp-for="ClienteId" class="control-label">Cliente</label>
-                    <select asp-for="ClienteId" class="form-select" asp-items="ViewBag.ClienteId">
-                        <option value="">-- Seleccione un Cliente --</option>
-                    </select>
-                    <span asp-validation-for="ClienteId" class="text-danger"></span>
+                        @if (Model.Estado == EstadoTurno.Pendiente)
+                        {
+                            <input asp-for="FechaHora"
+                                   class="form-control"
+                                   type="datetime-local"
+                                   id="fechaHoraInput"
+                                   value="@Model.FechaHora.ToString("yyyy-MM-ddTHH:mm")" />
+                        }
+                        else
+                        {
+                            <input asp-for="FechaHora"
+                                   class="form-control-plaintext border-bottom fw-bold"
+                                   type="datetime-local"
+                                   id="fechaHoraInput"
+                                   value="@Model.FechaHora.ToString("yyyy-MM-ddTHH:mm")"
+                                   readonly />
+                            <span class="badge bg-warning text-dark mt-2">
+                                No se puede reprogramar un turno con estado: @Model.Estado
+                            </span>
+                        }
+                        <span asp-validation-for="FechaHora" class="text-danger"></span>
+                    </div>
+
+                    @if (User.IsInRole("Empleado"))
+                    {
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="ClienteId" class="form-label fw-bold">Cliente</label>
+                            <select asp-for="ClienteId" class="form-select" asp-items="ViewBag.ClienteId">
+                                <option value="">-- Seleccione un Cliente --</option>
+                            </select>
+                            <span asp-validation-for="ClienteId" class="text-danger"></span>
+                        </div>
+                    }
+                    else
+                    {
+                        <input type="hidden" asp-for="ClienteId" />
+                    }
                 </div>
-            }
-            else
-            {
-                <input type="hidden" asp-for="ClienteId" />
-            }
 
-            <div class="mb-3">
-                <label asp-for="MascotaId" class="control-label">Mascota</label>
-                <select asp-for="MascotaId" class="form-select" asp-items="ViewBag.MascotaId">
-                    <option value="">-- Seleccione una Mascota --</option>
-                </select>
-                <span asp-validation-for="MascotaId" class="text-danger"></span>
-            </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="MascotaId" class="form-label fw-bold">Mascota</label>
+                        <select asp-for="MascotaId" class="form-select" asp-items="ViewBag.MascotaId">
+                            <option value="">-- Seleccione una Mascota --</option>
+                        </select>
+                        <span asp-validation-for="MascotaId" class="text-danger"></span>
+                    </div>
 
-            <div class="mb-3">
-                <label asp-for="Tipo" class="control-label">Tipo de Servicio</label>
-                <select asp-for="Tipo" id="tipoServicioSelect" class="form-select" asp-items="ViewBag.TipoServicioList">
-                    <option value="">-- Seleccione el Tipo de Servicio --</option>
-                </select>
-                <span asp-validation-for="Tipo" class="text-danger"></span>
-            </div>
-
-            <div class="mb-3">
-                <label asp-for="EmpleadoId" class="control-label">Empleado Asignado</label>
-                <select asp-for="EmpleadoId" id="empleadoSelect" class="form-select" asp-items="ViewBag.EmpleadoId">
-                    <option value="">-- Primero elija un servicio --</option>
-                </select>
-                <span asp-validation-for="EmpleadoId" class="text-danger"></span>
-            </div>
-
-            @if (User.IsInRole("Empleado"))
-            {
-                <div class="mb-3">
-                    <label asp-for="Estado" class="control-label">Estado del Turno</label>
-                    <select asp-for="Estado" class="form-select" asp-items="ViewBag.EstadoTurnoList">
-                        <option value="">-- Seleccione el Estado --</option>
-                    </select>
-                    <span asp-validation-for="Estado" class="text-danger"></span>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Tipo" class="form-label fw-bold">Tipo de Servicio</label>
+                        <select asp-for="Tipo" id="tipoServicioSelect" class="form-select" asp-items="ViewBag.TipoServicioList">
+                            <option value="">-- Seleccione el Tipo de Servicio --</option>
+                        </select>
+                        <span asp-validation-for="Tipo" class="text-danger"></span>
+                    </div>
                 </div>
-            }
-            else
-            {
-                <input type="hidden" asp-for="Estado" />
-            }
 
-            <div class="mb-3 mt-4">
-                <button type="submit" class="btn btn-primary">Guardar Cambios</button>
-                <a asp-action="Index" class="btn btn-secondary ms-2">Volver</a>
-            </div>
-        </form>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="EmpleadoId" class="form-label fw-bold">Empleado Asignado</label>
+                        <select asp-for="EmpleadoId" id="empleadoSelect" class="form-select" asp-items="ViewBag.EmpleadoId">
+                            <option value="">-- Primero elija un servicio --</option>
+                        </select>
+                        <span asp-validation-for="EmpleadoId" class="text-danger"></span>
+                    </div>
+
+                    @if (User.IsInRole("Empleado"))
+                    {
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Estado" class="form-label fw-bold">Estado del Turno</label>
+                            <select asp-for="Estado" class="form-select" asp-items="ViewBag.EstadoTurnoList">
+                                <option value="">-- Seleccione el Estado --</option>
+                            </select>
+                            <span asp-validation-for="Estado" class="text-danger"></span>
+                        </div>
+                    }
+                    else
+                    {
+                        <input type="hidden" asp-for="Estado" />
+                    }
+                </div>
+
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary px-4">Guardar Cambios</button>
+                    <a asp-action="Index" class="btn btn-secondary ms-2">Volver</a>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 

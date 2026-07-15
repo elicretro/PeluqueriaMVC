@@ -4,79 +4,87 @@
     ViewData["Title"] = "Crear Turno";
 }
 
-<h1>Crear</h1>
-<h4>Turno</h4>
-<hr />
-<div class="row">
-    <div class="col-md-6">
-        <form asp-action="Create">
-            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+<div class="container mt-4">
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h3 class="mb-0">Agendar Nuevo Turno</h3>
+        </div>
+        <div class="card-body">
+            <form asp-action="Create">
+                <div asp-validation-summary="All" class="text-danger mb-3"></div>
 
-            <div class="mb-3">
-                <label asp-for="FechaHora" class="control-label">Horario del Turno</label>
-                <input asp-for="FechaHora" class="form-control" type="datetime-local" id="fechaHoraInput" />
-                <span asp-validation-for="FechaHora" class="text-danger"></span>
-            </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="FechaHora" class="form-label fw-bold">Horario del Turno</label>
+                        <input asp-for="FechaHora" class="form-control" type="datetime-local" id="fechaHoraInput" />
+                        <span asp-validation-for="FechaHora" class="text-danger"></span>
+                    </div>
 
-            @if (User.IsInRole("Empleado"))
-            {
-                <div class="mb-3">
-                    <label asp-for="ClienteId" class="control-label">Cliente</label>
-                    <select asp-for="ClienteId" id="clienteSelect" class="form-select" asp-items="ViewBag.ClienteId">
-                        <option value="">-- Seleccione un Cliente --</option>
-                    </select>
-                    <span asp-validation-for="ClienteId" class="text-danger"></span>
+                    @if (User.IsInRole("Empleado"))
+                    {
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="ClienteId" class="form-label fw-bold">Cliente</label>
+                            <select asp-for="ClienteId" id="clienteSelect" class="form-select" asp-items="ViewBag.ClienteId">
+                                <option value="">-- Seleccione un Cliente --</option>
+                            </select>
+                            <span asp-validation-for="ClienteId" class="text-danger"></span>
+                        </div>
+                    }
+                    else
+                    {
+                        <input type="hidden" asp-for="ClienteId" value="@(Model?.ClienteId ?? ViewBag.ClienteId?.SelectedValue)" />
+                    }
                 </div>
-            }
-            else
-            {
-                <input type="hidden" asp-for="ClienteId" value="@(ViewBag.ClienteId?.SelectedValue ?? "")" />
-            }
 
-            <div class="mb-3">
-                <label asp-for="MascotaId" class="control-label">Mascota</label>
-                <select asp-for="MascotaId" id="mascotaSelect" class="form-select" asp-items="ViewBag.MascotaId">
-                    <option value="">-- Seleccione una Mascota --</option>
-                </select>
-                <span asp-validation-for="MascotaId" class="text-danger"></span>
-            </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="MascotaId" class="form-label fw-bold">Mascota</label>
+                        <select asp-for="MascotaId" id="mascotaSelect" class="form-select" asp-items="ViewBag.MascotaId">
+                            <option value="">-- Seleccione una Mascota --</option>
+                        </select>
+                        <span asp-validation-for="MascotaId" class="text-danger"></span>
+                    </div>
 
-            <div class="mb-3">
-                <label asp-for="Tipo" class="control-label">Tipo de Servicio</label>
-                <select asp-for="Tipo" id="tipoServicioSelect" class="form-select" asp-items="ViewBag.TipoServicioList">
-                    <option value="">-- Seleccione el Tipo de Servicio --</option>
-                </select>
-                <span asp-validation-for="Tipo" class="text-danger"></span>
-            </div>
-
-            <div class="mb-3">
-                <label asp-for="EmpleadoId" class="control-label">Empleado Asignado</label>
-                <select asp-for="EmpleadoId" id="empleadoSelect" class="form-select" asp-items="ViewBag.EmpleadoId">
-                    <option value="">-- Primero elija un servicio --</option>
-                </select>
-                <span asp-validation-for="EmpleadoId" class="text-danger"></span>
-            </div>
-
-            @if (User.IsInRole("Empleado"))
-            {
-                <div class="mb-3">
-                    <label asp-for="Estado" class="control-label">Estado del Turno</label>
-                    <select asp-for="Estado" class="form-select" asp-items="ViewBag.EstadoTurnoList">
-                        <option value="">-- Seleccione el Estado --</option>
-                    </select>
-                    <span asp-validation-for="Estado" class="text-danger"></span>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Tipo" class="form-label fw-bold">Tipo de Servicio</label>
+                        <select asp-for="Tipo" id="tipoServicioSelect" class="form-select" asp-items="ViewBag.TipoServicioList">
+                            <option value="">-- Seleccione el Tipo de Servicio --</option>
+                        </select>
+                        <span asp-validation-for="Tipo" class="text-danger"></span>
+                    </div>
                 </div>
-            }
-            else
-            {
-                <input type="hidden" asp-for="Estado" value="Pendiente" />
-            }
 
-            <div class="mb-3">
-                <button type="submit" class="btn btn-primary">Guardar Turno</button>
-                <a asp-action="Index" class="btn btn-secondary ms-2">Volver</a>
-            </div>
-        </form>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="EmpleadoId" class="form-label fw-bold">Empleado Asignado</label>
+                        <select asp-for="EmpleadoId" id="empleadoSelect" class="form-select">
+                            <option value="">-- Primero elija un servicio --</option>
+                        </select>
+                        <span asp-validation-for="EmpleadoId" class="text-danger"></span>
+                    </div>
+
+                    @if (User.IsInRole("Empleado"))
+                    {
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Estado" class="form-label fw-bold">Estado del Turno</label>
+                            <select asp-for="Estado" class="form-select" asp-items="ViewBag.EstadoTurnoList">
+                                <option value="">-- Seleccione el Estado --</option>
+                            </select>
+                            <span asp-validation-for="Estado" class="text-danger"></span>
+                        </div>
+                    }
+                    else
+                    {
+                        <input type="hidden" asp-for="Estado" value="Pendiente" />
+                    }
+                </div>
+
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary px-4">Guardar Turno</button>
+                    <a asp-action="Index" class="btn btn-secondary ms-2">Volver</a>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 
@@ -91,34 +99,39 @@
             const tipoServicioSelect = document.getElementById("tipoServicioSelect");
             const empleadoSelect = document.getElementById("empleadoSelect");
 
+            // Guardamos el ID del empleado seleccionado previamente (si lo hay) en una variable JS
+            const empleadoPreseleccionado = '@(Model?.EmpleadoId)';
+
             // ==========================================
             // 1. FILTRADO DINÁMICO DE EMPLEADOS POR SERVICIO
             // ==========================================
             async function cargarEmpleados() {
                 const tipoServicio = tipoServicioSelect.value;
 
-                // Si no hay tipo de servicio seleccionado, reseteamos el dropdown de empleados
                 if (!tipoServicio) {
                     empleadoSelect.innerHTML = '<option value="">-- Primero elija un servicio --</option>';
                     return;
                 }
 
                 try {
-                    // Llamamos al endpoint que creamos en el TurnosController
                     const url = `/Turnos/GetEmpleadosPorServicio?tipoServicio=${tipoServicio}`;
                     const response = await fetch(url);
                     if (!response.ok) throw new Error("Error en la petición de empleados.");
 
                     const empleados = await response.json();
 
-                    // Limpiamos las opciones actuales
                     empleadoSelect.innerHTML = '<option value="">-- Seleccione un Empleado --</option>';
 
-                    // Agregamos las nuevas opciones filtradas
                     empleados.forEach(emp => {
                         const option = document.createElement("option");
                         option.value = emp.id;
                         option.textContent = emp.nombreCompleto;
+
+                        // Si este empleado coincide con el seleccionado antes de que recargara la página, lo marcamos
+                        if (empleadoPreseleccionado && emp.id == empleadoPreseleccionado) {
+                            option.selected = true;
+                        }
+
                         empleadoSelect.appendChild(option);
                     });
 
@@ -130,7 +143,7 @@
             // Escuchamos los cambios en el selector de Tipo de Servicio
             tipoServicioSelect.addEventListener("change", cargarEmpleados);
 
-            // Si al cargar la página ya hay un servicio preseleccionado (por ejemplo, al volver de una validación fallida)
+            // Al cargar la página, si ya viene un servicio preelegido, disparamos la carga y respetamos la selección previa
             if (tipoServicioSelect.value) {
                 cargarEmpleados();
             }
@@ -150,6 +163,8 @@
             inputFecha.min = fechaMinima;
 
             inputFecha.addEventListener("change", function () {
+                if (!this.value) return;
+
                 const fechaSeleccionada = new Date(this.value);
                 const hora = fechaSeleccionada.getHours();
 
