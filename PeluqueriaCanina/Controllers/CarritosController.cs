@@ -46,8 +46,11 @@ namespace PeluqueriaCanina.Controllers
             {
                 carrito.Items.Add(new ItemCarrito
                 {
+
                     Producto = producto,
+                    ProductoId = producto.Id,
                     Cantidad = 1
+
                 });
             }
 

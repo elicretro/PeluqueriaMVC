@@ -19,7 +19,13 @@ public class VentasController : Controller
     // GET: VENTAS
     public async Task<IActionResult> Index()    
     {
-        return View(await _context.Ventas.ToListAsync());
+        // return View(await _context.Ventas.ToListAsync());
+
+        return View(
+            await _context.Ventas
+                .Include(v => v.Cliente)
+                .ToListAsync());
+
     }
 
     // GET: VENTAS/Details/5
@@ -30,8 +36,13 @@ public class VentasController : Controller
             return NotFound();
         }
 
+
         var venta = await _context.Ventas
+            .Include(v => v.Cliente)
+            .Include(v => v.Detalle)
+                .ThenInclude(d => d.Producto)
             .FirstOrDefaultAsync(m => m.Id == id);
+
         if (venta == null)
         {
             return NotFound();
@@ -181,16 +192,39 @@ public class VentasController : Controller
             return Content("No se encontró el cliente.");
         }
 
+        /*  var venta = new Venta
+          {
+              Fecha = DateTime.Now,
+              Cliente = cliente,
+              MetodoPago = metodoPago,
+              Total = carrito.Total,
+              Detalle = carrito.Items
+          };*/
         var venta = new Venta
         {
             Fecha = DateTime.Now,
             Cliente = cliente,
             MetodoPago = metodoPago,
-            Total = carrito.Total,
-            Detalle = carrito.Items
+            Total = carrito.Total
         };
 
         _context.Ventas.Add(venta);
+
+        await _context.SaveChangesAsync();
+
+        foreach (var item in carrito.Items)
+        {
+            var itemVenta = new ItemCarrito
+            {
+                VentaId = venta.Id,
+                ProductoId = item.Producto.Id,
+                Cantidad = item.Cantidad
+            };
+
+            _context.ItemsCarrito.Add(itemVenta);
+
+
+        }
 
         await _context.SaveChangesAsync();
 

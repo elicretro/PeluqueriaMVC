@@ -36,11 +36,15 @@
             <td>
                 @Html.DisplayFor(model => item.Fecha)
             </td>
-            <td>
-                @Html.DisplayFor(model => item.Cliente)
+                <td>
+                    @(item.Cliente != null
+                         ? $"{item.Cliente.Nombre} {item.Cliente.Apellido}"
+                         : "Sin cliente")
+
+
             </td>
             <td>
-                @Html.DisplayFor(model => item.Detalle)
+                    @item.Detalle.Count producto(s)
             </td>
             <td>
                 @Html.DisplayFor(model => item.Total)
