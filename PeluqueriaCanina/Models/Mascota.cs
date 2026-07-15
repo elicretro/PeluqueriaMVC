@@ -26,5 +26,10 @@ namespace PeluqueriaCanina.Models
         [Range(0.1, 150.0, ErrorMessage = ErrMsgs.Range)]
         [Display(Name = Alias.PesoMascota)]
         public double Peso { get; set; }
+
+        [Required]
+        public int ClienteId { get; set; } // Foreign Key física en la BD
+        public virtual Cliente Cliente { get; set; } // Propiedad de navegación
     }
 }
+

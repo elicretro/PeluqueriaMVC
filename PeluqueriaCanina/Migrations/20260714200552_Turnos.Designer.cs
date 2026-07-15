@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PeluqueriaCanina.Data;
 
@@ -11,13 +12,15 @@ using PeluqueriaCanina.Data;
 namespace PeluqueriaCanina.Migrations
 {
     [DbContext(typeof(PeluqueriaContext))]
-    partial class PeluqueriaContextModelSnapshot : ModelSnapshot
+    [Migration("20260714200552_Turnos")]
+    partial class Turnos
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.10")
+                .HasAnnotation("ProductVersion", "10.0.9")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -304,7 +307,7 @@ namespace PeluqueriaCanina.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("ClienteId")
+                    b.Property<int?>("ClienteId")
                         .HasColumnType("int");
 
                     b.Property<int>("Edad")
@@ -498,8 +501,10 @@ namespace PeluqueriaCanina.Migrations
                     b.Property<int>("Legajo")
                         .HasColumnType("int");
 
-                    b.Property<int>("Puesto")
-                        .HasColumnType("int");
+                    b.Property<string>("Puesto")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<decimal>("Sueldo")
                         .HasColumnType("decimal(18,2)");
@@ -604,13 +609,9 @@ namespace PeluqueriaCanina.Migrations
 
             modelBuilder.Entity("PeluqueriaCanina.Models.Mascota", b =>
                 {
-                    b.HasOne("PeluqueriaCanina.Models.Cliente", "Cliente")
+                    b.HasOne("PeluqueriaCanina.Models.Cliente", null)
                         .WithMany("Mascotas")
-                        .HasForeignKey("ClienteId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.Navigation("Cliente");
+                        .HasForeignKey("ClienteId");
                 });
 
             modelBuilder.Entity("PeluqueriaCanina.Models.Turno", b =>

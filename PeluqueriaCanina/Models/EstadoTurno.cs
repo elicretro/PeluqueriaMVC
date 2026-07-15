@@ -4,7 +4,6 @@
     {
         Pendiente,
         Confirmado,
-        Asistido,
         Cancelado,
         Ausente
     }

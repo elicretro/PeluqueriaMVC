@@ -188,7 +188,7 @@ namespace PeluqueriaCanina.Controllers
                         Dni = dni,
                         Telefono = telefono,
                         Legajo = GenerarLegajo(),
-                        Puesto = "Sin definir",
+                        Puesto = TipoPuesto.Peluquero,
                         Sueldo = 0
                     };
                 }

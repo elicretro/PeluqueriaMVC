@@ -68,7 +68,7 @@ public class PersonasController : Controller
                     Dni = persona.Dni,
                     Telefono = persona.Telefono,
                     Email = persona.Email,
-                    Puesto = puestoInput,
+                    Puesto = TipoPuesto.Peluquero,
                     Especialidad = especialidadEnum
                 };
                 _context.Add(nuevoEmpleado);
@@ -166,7 +166,7 @@ public class PersonasController : Controller
                             Dni = persona.Dni,
                             Telefono = persona.Telefono,
                             Email = persona.Email,
-                            Puesto = !string.IsNullOrEmpty(puestoInput) ? puestoInput : "Staff",
+                            Puesto = TipoPuesto.Peluquero,
                             Especialidad = especialidadConvertida
                         };
                     }
@@ -197,7 +197,7 @@ public class PersonasController : Controller
                     // Si se mantiene como empleado, actualizamos sus campos específicos
                     if (personaEnDb is Empleado empleadoEnDb)
                     {
-                        empleadoEnDb.Puesto = !string.IsNullOrEmpty(puestoInput) ? puestoInput : "Staff";
+                        empleadoEnDb.Puesto = TipoPuesto.Peluquero;
 
                         TipoServicio especialidadConvertida;
                         if (Enum.TryParse(especialidadInput, out especialidadConvertida))
