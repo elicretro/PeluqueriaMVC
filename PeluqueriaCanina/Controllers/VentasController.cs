@@ -23,10 +23,13 @@ public class VentasController : Controller
     {
         // return View(await _context.Ventas.ToListAsync());
 
+
         return View(
-            await _context.Ventas
-                .Include(v => v.Cliente)
-                .ToListAsync());
+                await _context.Ventas
+                    .Include(v => v.Cliente)
+                    .Include(v => v.Detalle)
+                    .ToListAsync());
+
 
     }
 
