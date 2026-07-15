@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using PeluqueriaCanina.Data;
 using PeluqueriaCanina.Helpers;
 using PeluqueriaCanina.Models;
-[Authorize(Roles = "Cliente")]
+
 public class VentasController : Controller
 {
     private readonly PeluqueriaContext _context;
