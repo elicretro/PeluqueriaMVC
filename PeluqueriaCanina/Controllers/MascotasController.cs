@@ -162,18 +162,36 @@ public class MascotasController : Controller
     // POST: MASCOTAS/Edit/5
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, [Bind("Id,Nombre,Edad,Tipo,Raza,Peso")] Mascota mascota, int idCliente)
+    public async Task<IActionResult> Edit(int id, [Bind("Id,Nombre,Edad,Tipo,Raza,Peso")] Mascota mascota, int? idCliente)
     {
         if (id != mascota.Id)
         {
             return NotFound();
         }
 
+        // Buscamos el registro real actual en la base de datos
+        var mascotaEnDb = await _context.Mascotas.FindAsync(id);
+        if (mascotaEnDb == null)
+        {
+            return NotFound();
+        }
+
+        // Limpiamos las validaciones de las propiedades de navegación que no editamos
+        ModelState.Remove("Cliente");
+        ModelState.Remove("Identificacion");
+
         if (ModelState.IsValid)
         {
             try
             {
-                _context.Update(mascota);
+                // Actualizamos únicamente los valores editables sin tocar las claves foráneas ni el dueño
+                mascotaEnDb.Nombre = mascota.Nombre;
+                mascotaEnDb.Edad = mascota.Edad;
+                mascotaEnDb.Tipo = mascota.Tipo;
+                mascotaEnDb.Raza = mascota.Raza;
+                mascotaEnDb.Peso = mascota.Peso;
+
+                _context.Update(mascotaEnDb);
                 await _context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)
@@ -188,16 +206,19 @@ public class MascotasController : Controller
                 }
             }
 
+            // REDIRECCIÓN INTELIGENTE:
             bool esEmpleado = User.IsInRole("Empleado");
-            if (esEmpleado)
+            if (esEmpleado && idCliente.HasValue && idCliente.Value > 0)
             {
-                return RedirectToAction("Details", "Personas", new { id = idCliente });
+                return RedirectToAction("Details", "Personas", new { id = idCliente.Value });
             }
             else
             {
                 return RedirectToAction(nameof(Index));
             }
         }
+
+        ViewBag.IdCliente = idCliente;
         return View(mascota);
     }
 
@@ -220,9 +241,9 @@ public class MascotasController : Controller
     }
 
     // POST: MASCOTAS/Delete/5
-    [HttpPost]
+    [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> DeleteMascotaPost(int id, int idCliente)
+    public async Task<IActionResult> DeleteMascotaPost(int id, int? idCliente)
     {
         var mascota = await _context.Mascotas.FindAsync(id);
         if (mascota != null)
@@ -232,16 +253,20 @@ public class MascotasController : Controller
         }
 
         bool esEmpleado = User.IsInRole("Empleado");
-        if (esEmpleado)
+
+        // Si venimos de la vista de Personas (tenemos un idCliente válido)
+        if (esEmpleado && idCliente.HasValue && idCliente.Value > 0)
         {
-            return RedirectToAction("Details", "Personas", new { id = idCliente });
+            return RedirectToAction("Details", "Personas", new { id = idCliente.Value });
         }
         else
         {
+            // Si es el cliente desde su propio panel
             return RedirectToAction(nameof(Index));
         }
     }
 
+   
     private bool MascotaExists(int? id)
     {
         return _context.Mascotas.Any(e => e.Id == id);
