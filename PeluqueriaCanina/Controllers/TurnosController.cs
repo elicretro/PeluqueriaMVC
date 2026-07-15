@@ -79,6 +79,14 @@ public class TurnosController : Controller
             ModelState.Remove("ClienteId");
         }
 
+        // =========================================================
+        // SOLUCIÓN: Removemos las propiedades de navegación del validador
+        // =========================================================
+        ModelState.Remove("Cliente");
+        ModelState.Remove("Mascota");
+        ModelState.Remove("Empleado");
+        // =========================================================
+
         // 1. Validación de compatibilidad de servicio y empleado en el servidor
         var empleado = await _context.Empleados.FindAsync(turno.EmpleadoId);
         if (empleado != null)
@@ -163,7 +171,6 @@ public class TurnosController : Controller
         await CargarDesplegablesConFiltro(turno);
         return View(turno);
     }
-
     // POST: Turnos/Edit/5
     [HttpPost]
     [ValidateAntiForgeryToken]
@@ -177,10 +184,22 @@ public class TurnosController : Controller
         bool esEmpleado = User.IsInRole("Empleado");
         if (!esEmpleado)
         {
+            // Si es cliente, no puede modificar el estado del turno
             ModelState.Remove("Estado");
+            // También removemos ClienteId del validador ya que viene directo del input hidden
+            ModelState.Remove("ClienteId");
         }
 
-        // Validación de puesto del empleado en edición
+        // =================================================================
+        // SOLUCIÓN: Evitamos que Entity Framework exija los objetos completos 
+        // de navegación que causaban los errores de validación.
+        // =================================================================
+        ModelState.Remove("Cliente");
+        ModelState.Remove("Mascota");
+        ModelState.Remove("Empleado");
+        // =================================================================
+
+        // 1. Validación de puesto del empleado en edición
         var empleado = await _context.Empleados.FindAsync(turno.EmpleadoId);
         if (empleado != null)
         {
@@ -192,6 +211,46 @@ public class TurnosController : Controller
         else
         {
             ModelState.AddModelError("EmpleadoId", "El empleado seleccionado no es válido.");
+        }
+
+        // 2. Validación de rango de atención (08:00 a 19:00 hs)
+        int hora = turno.FechaHora.Hour;
+        if (hora < 8 || hora >= 19)
+        {
+            ModelState.AddModelError("FechaHora", "El horario del turno debe estar entre las 08:00 y las 19:00 hs.");
+        }
+
+        // 3. Evitar solapamiento de horarios (excluyendo el turno actual que se está editando)
+        if (ModelState.IsValid)
+        {
+            DateTime inicioNuevo = turno.FechaHora;
+            DateTime finNuevo = turno.FechaHora.AddHours(1);
+
+            // Verificamos si el empleado está ocupado (pero ignoramos este mismo turno que estamos editando)
+            bool empleadoOcupado = await _context.Turnos.AnyAsync(t =>
+                t.IdTurno != turno.IdTurno &&
+                t.EmpleadoId == turno.EmpleadoId &&
+                t.FechaHora < finNuevo &&
+                t.FechaHora.AddHours(1) > inicioNuevo
+            );
+
+            if (empleadoOcupado)
+            {
+                ModelState.AddModelError("FechaHora", "El empleado seleccionado ya tiene un turno asignado que se superpone con este horario.");
+            }
+
+            // Verificamos si la mascota está ocupada (ignorando este mismo turno)
+            bool mascotaOcupada = await _context.Turnos.AnyAsync(t =>
+                t.IdTurno != turno.IdTurno &&
+                t.MascotaId == turno.MascotaId &&
+                t.FechaHora < finNuevo &&
+                t.FechaHora.AddHours(1) > inicioNuevo
+            );
+
+            if (mascotaOcupada)
+            {
+                ModelState.AddModelError("MascotaId", "Esta mascota ya tiene otro turno programado en un horario que se superpone.");
+            }
         }
 
         if (ModelState.IsValid)
@@ -215,6 +274,7 @@ public class TurnosController : Controller
             return RedirectToAction(nameof(Index));
         }
 
+        // Si llegó acá por un error de validación, recargamos los combos respetando lo seleccionado
         await CargarDesplegablesConFiltro(turno);
         return View(turno);
     }
