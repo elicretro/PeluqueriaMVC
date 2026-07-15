@@ -59,17 +59,27 @@
                 @Html.DisplayFor(model => item.PresentacionComercial)
             </td>
                 <td>
-                    <a asp-controller="Carritos"
-                       asp-action="Agregar"
-                       asp-route-id="@item.Id">
-                        Agregar al carrito
-                    </a> |
+                    @if (User.IsInRole("Cliente"))
+                    {
+                        <a asp-controller="Carritos"
+                           asp-action="Agregar"
+                           asp-route-id="@item.Id">
+                            Agregar al carrito
+                        </a>
+                        <text> | </text>
+                    }
+
                     <a asp-action="Details" asp-route-id="@item.Id">
                         Details
-                    </a> |
-                    <a asp-action="Delete" asp-route-id="@item.Id">
-                        Delete
                     </a>
+
+                    @if (User.IsInRole("Empleado"))
+                    {
+                        <text> | </text>
+                        <a asp-action="Delete" asp-route-id="@item.Id">
+                            Delete
+                        </a>
+                    }
                 </td>
         </tr>
 }
